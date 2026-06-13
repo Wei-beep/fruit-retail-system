@@ -25,14 +25,14 @@ Mock 模式保留作为开发/调试备选，仍可切换回 `mock` 运行。后
 
 - `app/core/`：配置加载、项目路径解析、常量、异常、显示环境设置。
 - `app/db/`：SQLite 连接、schema、数据库初始化、仓储函数。业务层不要直接散落 SQL。
-- `app/vision/`：识别接口、Mock 识别器、真实 YOLO 预留入口。
-- `app/camera/`：摄像头接口、Mock 摄像头、USB 摄像头预留实现。
-- `app/weighing/`：称重接口、Mock 称重、稳定检测、HX711 与校准预留。
+- `app/vision/`：识别接口、Mock 识别器、YOLO ONNX 识别引擎（已实现）。
+- `app/camera/`：摄像头接口、Mock 摄像头、USB 摄像头驱动（已实现）。
+- `app/weighing/`：称重接口、Mock 称重、稳定检测、HX711 驱动与校准服务（已实现）。
 - `app/pricing/`：价格查询/更新、总价计算、交易记录服务。
 - `app/workflow/`：交易流程编排。`prepare_transaction()` 只生成待确认交易，`confirm_transaction()` 才写入数据库。
 - `app/gui/`：Tkinter 界面和 GUI 控制器。GUI 调用业务层，不直接访问 SQL。
 - `app/api/`：FastAPI 服务和基础价格/交易路由。GUI 当前不依赖 API。
-- `scripts/`：数据库初始化、GUI/API 启动、校准提示、拍照测试、YOLO 测速、标签同步、摄像头测试、称重验证入口。
+- `scripts/`：数据库初始化、GUI/API 启动、称重校准、拍照测试、YOLO 测速、标签同步、摄像头测试、称重验证入口。
 - `tests/`：基础 pytest 测试，覆盖稳定检测、计价和 Mock 交易流程。
 - `docs/`：模块设计、Mock 模式、数据库、API、硬件接线、校准说明。
 - `data/`：本地数据库、测试/采集图片、模型文件（`best.pt`、`best.onnx` 等）。不要提交或依赖大型生成数据。
@@ -90,7 +90,7 @@ python -m pytest
 - 保持 `config.yaml` 中默认 `camera.mode`、`weighing.mode`、`vision.mode` 可根据开发阶段切换；当前 camera、vision、weighing 三者默认均使用 `real`，Mock 模式仍可作为开发/调试备选通过配置切回。
 - 称重模块已实现并默认启用（`app/weighing/hx711_sensor.py`，`weighing.mode: real`）；首次使用前必须运行 `scripts/calibrate_scale.py` 完成校准。
 - 不要让 Mock 模式依赖 OpenCV、真实 YOLO 包、GPIO/HX711 库或硬件设备。
-- 真实硬件和真实 YOLO 逻辑只能在既有预留位置扩展：`app/camera/usb_camera.py`、`app/weighing/hx711_sensor.py`、`app/weighing/calibration.py`、`app/vision/detector.py` 以及相关脚本。
+- 真实硬件和真实 YOLO 逻辑只能在既有实现位置扩展：`app/camera/usb_camera.py`、`app/weighing/hx711_sensor.py`、`app/weighing/calibration.py`、`app/vision/detector.py` 以及相关脚本。
 - 识别器接口应保持 `predict(frame: np.ndarray) -> dict`，返回至少包含 `label` 和 `confidence`。已统一为内存直传，不再走硬盘路径。
 - 称重接口应返回 kg 单位的 `float`。`TransactionFlow.wait_for_stable_weight()` 负责稳定判断和有效重量范围过滤。
 - 交易流程必须保持"先生成待确认交易，用户确认后才写入 `transactions` 表"的语义。

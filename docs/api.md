@@ -19,9 +19,9 @@ GET /health
 {"status": "ok"}
 ```
 
-## 计划接口
+## 已实现的基础接口（对外契约待定）
 
-当前已提供基础版本，后续可补充更完整的校验、错误码、分页和设备状态。
+以下接口已在 `app/api/routes_price.py`、`routes_transaction.py` 提供基础实现，后续可补充更完整的校验、错误码、分页和设备状态。
 
 ```text
 GET /api/price?label=apple

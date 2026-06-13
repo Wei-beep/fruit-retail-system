@@ -18,10 +18,8 @@ Mock 模式保留作为开发/调试备选，可通过 `config.yaml` 切换回�
 - `YOLODetector` 已完成：65 类果蔬分类，ONNX Runtime 3 线程 CPU 推理，256x256 中心裁剪预处理，支持内存矩阵和文件路径双输入。
 - `USBCamera` 已完成：常开设备，缓冲区 1 防过期帧，`capture()` 连读 3 次清缓存后抓拍，`get_stream_frame()` 为 GUI 提供实时视频流。
 - `HX711Sensor` 已完成：RPi.GPIO 位操作读取 24 位 ADC，结合 `calibration` 表参数换算 kg，支持去皮、平均采样和电源管理。
-- `MockWeightSensor` 保留，模拟逐渐稳定到约 0.52 kg 的重量（Mock 模式备选）。
 - `StabilityDetector` 使用滑动窗口判断重量稳定。
-- `MockCamera` 保留，返回 `data/images/test/` 中的测试图片。
-- `MockFruitVegetableDetector` 保留，固定返回 `apple` 和 `0.97` 置信度。
+- Mock 组件保留作为开发/调试备选：`MockWeightSensor`（约 0.52 kg）、`MockCamera`（测试图）、`MockFruitVegetableDetector`（固定 `apple` 0.97），详见 `docs/mock_mode.md`。
 - SQLite `products` 表支持 65 类果蔬价格（通过 `scripts/sync_db.py` 同步）。
 - Tkinter GUI 集成实时视频流，自动等待称重、识别、计价并显示待确认交易。
 - 用户点击"确认"后写入 `transactions` 表，点击"清除"则取消当前待确认交易。
@@ -127,13 +125,6 @@ curl http://127.0.0.1:8000/health
 | `weighing.mode` | `real`   | 使用 HX711 称重（需先校准）；切 `mock` 则用 MockWeightSensor 模拟 |
 
 Mock 模式用于在没有真实硬件时开发 GUI、数据库、计价和交易流程。
-
-## 真实硬件/模型接入位置
-
-- HX711 称重：`app/weighing/hx711_sensor.py`（**已实现**）
-- 称重校准：`app/weighing/calibration.py`、`scripts/calibrate_scale.py`（**已实现**）
-- USB 摄像头：`app/camera/usb_camera.py`（**已实现**）
-- YOLO 模型：`app/vision/detector.py`（**已实现**）
 
 ## YOLO 识别引擎说明
 
