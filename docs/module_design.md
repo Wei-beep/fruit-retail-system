@@ -32,7 +32,7 @@
 
 ## gui
 
-`app/gui` 使用 Tkinter 实现 800x480 窗口（默认 `fullscreen: true`）。`main_window.py` 负责界面展示，并按 `config.yaml` 各模块 `mode` 实例化对应的 camera/sensor/detector，集成右侧实时视频流面板（约 30 FPS，PIL 缩放渲染）；`gui_controller.py` 负责后台线程、确认和清除逻辑。`performance_monitor.py` 提供可选的后台性能监控（FPS/CPU/内存，依赖 psutil，由 `gui.monitor_performance` 开关）。
+`app/gui` 使用 Tkinter 实现 800x480 窗口（默认 `fullscreen: true`）。`main_window.py` 负责界面展示，并按 `config.yaml` 各模块 `mode` 实例化对应的 camera/sensor/detector，集成右侧实时视频流面板（约 30 FPS，PIL 缩放渲染）；`gui_controller.py` 负责后台线程、确认、清除和退出（`stop()`）逻辑；界面右上角的“✕”退出按钮经 `MainWindow._on_close()` 停止后台线程并销毁窗口。`performance_monitor.py` 提供可选的后台性能监控（FPS/CPU/内存，依赖 psutil，由 `gui.monitor_performance` 开关）。
 
 ## api
 

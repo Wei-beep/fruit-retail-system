@@ -120,6 +120,7 @@ python -m pytest
 - `camera_interface.py` 的 `capture()` 方法签名已从返回文件路径改为返回 `np.ndarray`（内存直传）。
 - GUI 已集成实时视频流：通过 `camera.get_stream_frame()` 拉取帧，PIL 缩放后渲染到右侧面板，维持约 30 FPS。
 - GUI 包含后台性能监控：每 2 秒打印一次渲染 FPS、App CPU、系统 CPU、内存占用（依赖 `psutil`）。
+- GUI 右上角有"✕"退出按钮（`MainWindow._on_close()`）：停止性能监控、调用 `GUIController.stop()` 阻止后台准备循环再排队、销毁窗口；`WM_DELETE_WINDOW` 也绑定到同一逻辑。专为 `fullscreen: true` 无标题栏场景提供退出入口。
 - `scripts/sync_db.py` 可将 `label_map.json` 中全部 65 类果蔬写入 `products` 表（含默认单价 9.9 元/kg），供真实 YOLO 模式下查价使用。
 - `scripts/speed_test.py` 提供独立的 YOLO ONNX 模型批量测速，输出单张推理耗时和等效 FPS。
 - `scripts/stream_test.py` 提供独立的 USB 摄像头实时流测试，显示实时 FPS。
