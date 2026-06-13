@@ -1,0 +1,39 @@
+database:
+  path: data/app.db
+
+# 改 real 即可接入真实模块
+# 改 mock 即可使用模拟系统
+camera:
+  mode: real    
+  device_index: 0
+  image_save_dir: data/images/captured
+  test_image_dir: data/images/test
+  width: 640
+  height: 480
+
+weighing:
+  mode: real    
+  dout_pin: 17  # HX711 DT → GPIO 17 (Pin 11)
+  sck_pin: 27   # HX711 SCK → GPIO 27 (Pin 13)
+  gain: 128     # 增益 (128 / 64 / 32)
+  stable_window_size: 10
+  stable_threshold_kg: 0.01
+  min_valid_weight_kg: 0.01
+  max_valid_weight_kg: 5.0
+
+vision:
+  mode: real
+  model_path: data/models/best.onnx
+  confidence_threshold: 0.5
+
+api:
+  host: 127.0.0.1
+  port: 8000
+
+gui:
+  width: 800
+  height: 480
+  fullscreen: true
+  auto_set_display: true
+  display: ":0"
+  monitor_performance: false   # ← 改 true/false 即可打开/关闭

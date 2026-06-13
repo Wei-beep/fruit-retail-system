@@ -1,0 +1,60 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Test, coverage, and tool caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local SQLite databases and journals
+data/app.db
+data/*.db
+data/*.sqlite
+data/*.sqlite3
+data/*.db-journal
+data/*.db-shm
+data/*.db-wal
+
+# Runtime captured images
+data/images/captured/*
+!data/images/captured/.gitkeep
+
+# YOLO model weights — too large for git, distributed separately (no LFS).
+# label_map.json and README.md under data/models/ are kept (small, needed).
+data/models/*.onnx
+data/models/*.pt
+
+# Logs and local OS/editor files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.tmp
+
+# Python packaging / build artifacts
+build/
+dist/
+*.egg-info/
+*.egg

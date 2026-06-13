@@ -1,0 +1,14 @@
+fastapi
+pydantic
+uvicorn
+pyyaml
+pytest
+numpy
+opencv-python
+onnxruntime
+Pillow
+psutil
+
+# Optional for real HX711 weighing mode. Mock mode does not require it.
+# RPi.GPIO is pre-installed on Raspberry Pi OS; on other systems it will fail.
+# RPi.GPIO
