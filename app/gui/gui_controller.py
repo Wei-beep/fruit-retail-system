@@ -22,9 +22,15 @@ class GUIController:
         self.on_cleared = on_cleared
         self.current_transaction: dict | None = None
         self._running = False
+        self._stopped = False
+
+    def stop(self) -> None:
+        """退出时调用：阻止后续后台准备循环继续排队。"""
+        self._stopped = True
+        self._running = False
 
     def start_waiting(self) -> None:
-        if self._running:
+        if self._stopped or self._running:
             return
         self._running = True
         self.current_transaction = None

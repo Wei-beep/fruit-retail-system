@@ -50,6 +50,8 @@ class MainWindow:
         self.root.title(PROJECT_TITLE)
         self.root.geometry(f"{gui_config['width']}x{gui_config['height']}")
         self.root.resizable(False, False)
+        # 窗口管理器关闭按钮也走统一退出逻辑
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
         if gui_config.get("fullscreen"):
             self.root.attributes("-fullscreen", True)
             self.root.bind("<Escape>", lambda _event: self.root.attributes("-fullscreen", False))
@@ -61,6 +63,21 @@ class MainWindow:
         # === 核心修改 1：顶部 Header 区域（独占一行，解决长标题撑爆布局的问题） ===
         header_frame = ttk.Frame(container)
         header_frame.pack(side=tk.TOP, fill=tk.X, pady=(0, 10))
+
+        # 右上角退出按钮：全屏无标题栏时也能退出程序（先 pack 以占据右侧）
+        close_btn = tk.Button(
+            header_frame,
+            text="✕",
+            font=("Arial", 14, "bold"),
+            fg="white",
+            bg="#c0392b",
+            activebackground="#e74c3c",
+            activeforeground="white",
+            relief="flat",
+            width=3,
+            command=self._on_close,
+        )
+        close_btn.pack(side=tk.RIGHT, anchor="ne")
 
         title = ttk.Label(header_frame, text=PROJECT_TITLE, font=("Arial", 20, "bold"))
         title.pack(anchor="w")
@@ -154,6 +171,16 @@ class MainWindow:
                 self.fields[key].set("-")
 
         self.root.after(0, update)
+
+    def _on_close(self) -> None:
+        """退出程序：停止后台线程并销毁窗口。
+
+        业务线程与性能监控均为 daemon 线程，主循环结束后会随进程退出；
+        摄像头与 GPIO 由各自的 __del__ 释放。
+        """
+        self.controller.stop()
+        self._monitor.stop()
+        self.root.destroy()
 
 
 def create_transaction_flow(config: dict) -> TransactionFlow:
