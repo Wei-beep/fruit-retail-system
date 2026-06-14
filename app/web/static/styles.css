@@ -43,12 +43,13 @@ body { display: flex; align-items: center; justify-content: center; }
 /* ============ 顶部进度条 ============ */
 .progress {
   height: 60px; flex: 0 0 60px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 10px;
+  display: flex; align-items: center; justify-content: space-between;
   background: var(--card);
   border-bottom: 1px solid var(--border);
-  padding: 0 26px;
+  padding: 0 14px;
 }
+/* 进度步骤靠左上角 */
+.steps { display: flex; align-items: center; gap: 10px; }
 .step { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
 .step .dot {
   width: 26px; height: 26px; border-radius: 50%;
@@ -188,8 +189,35 @@ body { display: flex; align-items: center; justify-content: center; }
 .btn-primary:active { background: var(--accent-dark); }
 .btn-ghost { background: var(--bg); color: var(--text); border: 1px solid var(--border-strong); }
 .btn-warn { background: var(--warn); color: #fff; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-danger:active { background: #b91c1c; }
 .btn-sm { flex: 0 0 auto; padding: 8px 16px; font-size: 15px; }
 .btn-wide { width: 100%; flex: none; }
+
+/* ============ 退出 ✕ 按钮（右上角） ============ */
+.exit-btn {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: 9px;
+  border: none; cursor: pointer; font-family: var(--font);
+  font-size: 18px; font-weight: 700; line-height: 1;
+  background: #dc2626; color: #fff;
+}
+.exit-btn:active { background: #b91c1c; transform: scale(.96); }
+
+/* ============ 退出确认弹窗 ============ */
+.modal {
+  position: absolute; inset: 0; z-index: 100;
+  background: rgba(17, 24, 39, .45);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal[hidden] { display: none; }
+.modal-card {
+  width: 380px; background: var(--card); border-radius: 16px;
+  padding: 26px 24px 20px; text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+}
+.modal-title { font-size: 24px; font-weight: 800; color: var(--text); }
+.modal-sub { margin-top: 10px; font-size: 15px; color: var(--text-muted); }
+.modal-actions { display: flex; gap: 12px; margin-top: 22px; }
 
 /* ============ 覆盖层（⑤ ⑥） ============ */
 .overlay {

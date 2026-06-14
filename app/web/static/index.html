@@ -4,25 +4,29 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=800, height=480, initial-scale=1, user-scalable=no" />
   <title>果蔬自助称重</title>
+  <link rel="icon" href="data:," />
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <!-- 固定 800×480 舞台 -->
   <div class="stage" id="stage" data-state="idle">
 
-    <!-- 顶部进度引导：放置 → 识别 → 确认 -->
+    <!-- 顶部进度引导：放置 → 识别 → 确认（偏左上角）；右上角退出 ✕ -->
     <header class="progress" id="progress">
-      <div class="step" data-step="place">
-        <span class="dot">1</span><span class="step-label">放置</span>
+      <div class="steps">
+        <div class="step" data-step="place">
+          <span class="dot">1</span><span class="step-label">放置</span>
+        </div>
+        <div class="bar"></div>
+        <div class="step" data-step="recognize">
+          <span class="dot">2</span><span class="step-label">识别</span>
+        </div>
+        <div class="bar"></div>
+        <div class="step" data-step="confirm">
+          <span class="dot">3</span><span class="step-label">确认</span>
+        </div>
       </div>
-      <div class="bar"></div>
-      <div class="step" data-step="recognize">
-        <span class="dot">2</span><span class="step-label">识别</span>
-      </div>
-      <div class="bar"></div>
-      <div class="step" data-step="confirm">
-        <span class="dot">3</span><span class="step-label">确认</span>
-      </div>
+      <button class="exit-btn" data-action="open-exit" aria-label="退出">✕</button>
     </header>
 
     <!-- 主体：左实时画面 + 右信息栏 -->
@@ -123,6 +127,18 @@
       </div>
       <div class="pay-hint">请扫码完成支付</div>
       <button class="btn btn-primary btn-wide" data-action="finish">完成，下一位</button>
+    </div>
+
+    <!-- 退出确认弹窗 -->
+    <div class="modal" id="exitModal" hidden>
+      <div class="modal-card">
+        <div class="modal-title">确定要退出吗？</div>
+        <div class="modal-sub">退出后将结束当前自助称重程序</div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" data-action="exit-cancel">否</button>
+          <button class="btn btn-danger" data-action="exit-confirm">是，退出</button>
+        </div>
+      </div>
     </div>
 
     <!-- 连接状态提示 -->

@@ -29,6 +29,7 @@ const els = {
   payUnit: document.getElementById("payUnit"),
   payOrder: document.getElementById("payOrder"),
   connToast: document.getElementById("connToast"),
+  exitModal: document.getElementById("exitModal"),
 };
 
 let ws = null;
@@ -254,7 +255,18 @@ stage.addEventListener("click", (e) => {
   else if (action === "open-selector") openSelector();
   else if (action === "close-selector") setState(returnState);
   else if (action === "finish") send({ type: "clear" });
+  else if (action === "open-exit") els.exitModal.hidden = false;
+  else if (action === "exit-cancel") els.exitModal.hidden = true;
+  else if (action === "exit-confirm") doExit();
 });
+
+/* 退出：确认后通知后端结束 kiosk（演示模式禁用） */
+function doExit() {
+  if (DEMO) { els.exitModal.hidden = true; showToast("演示模式：退出已禁用"); return; }
+  const title = els.exitModal.querySelector(".modal-title");
+  if (title) title.textContent = "正在退出…";
+  fetch("/api/exit", { method: "POST" }).catch(() => {});
+}
 els.search.addEventListener("input", renderGrid);
 
 /* ---------------- 启动 ---------------- */

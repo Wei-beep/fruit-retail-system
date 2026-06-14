@@ -16,6 +16,7 @@ import uvicorn
 from app.core.config import load_config
 from app.core.display import configure_gui_display
 from app.db.init_db import initialize_database
+from app.web.lifecycle import shutdown_event
 
 
 def _wait_until_ready(url: str, timeout: float = 30.0) -> bool:
@@ -42,7 +43,7 @@ def _find_browser() -> str | None:
 def _idle_until_interrupt(thread: threading.Thread, server: uvicorn.Server, hint: str) -> None:
     print(hint)
     try:
-        while thread.is_alive():
+        while thread.is_alive() and not shutdown_event.is_set():
             time.sleep(0.5)
     except KeyboardInterrupt:
         pass
@@ -54,6 +55,7 @@ def run_web() -> None:
     config = load_config()
     gui = config["gui"]
     configure_gui_display(gui)
+    shutdown_event.clear()
 
     host = "127.0.0.1"
     port = int(gui.get("web_port", 8000))
@@ -95,18 +97,30 @@ def run_web() -> None:
         "--disable-infobars",
         "--disable-translate",
         "--disable-session-crashed-bubble",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-background-networking",  # 关闭 GCM/推送等后台联网噪音
+        "--disable-component-update",
         "--check-for-update-interval=31536000",
         "--autoplay-policy=no-user-gesture-required",
         "--user-data-dir=/tmp/fruit-kiosk-chromium",
         f"--app={base_url}",
     ]
     print(f"🚀 启动 Chromium kiosk: {browser}")
-    proc = subprocess.Popen(args)
+    # 屏蔽 Chromium 自身的内部日志（GCM/GPU 等噪音），不影响 python/uvicorn 日志
+    proc = subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
-        proc.wait()
+        # 等待 Chromium 退出，或前端点击"退出"置位关停信号
+        while proc.poll() is None:
+            if shutdown_event.wait(timeout=0.3):
+                break
     except KeyboardInterrupt:
         pass
     finally:
         if proc.poll() is None:
             proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                proc.kill()
         server.should_exit = True
