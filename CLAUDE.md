@@ -32,7 +32,7 @@ Mock 模式保留作为开发/调试备选，仍可切换回 `mock` 运行。后
 - `app/workflow/`：交易流程编排。`prepare_transaction()` 只生成待确认交易，`confirm_transaction()` 才写入数据库。
 - `app/gui/`：Tkinter 界面和 GUI 控制器。GUI 调用业务层，不直接访问 SQL。
 - `app/api/`：FastAPI 服务和基础价格/交易路由。GUI 当前不依赖 API。
-- `scripts/`：数据库初始化、GUI/API 启动、称重校准、拍照测试、YOLO 测速、标签同步、摄像头测试、称重验证入口。
+- `scripts/`：数据库初始化、GUI/API 启动、称重校准、拍照测试、YOLO 测速、标签同步、摄像头测试、称重验证（命令行与全屏 GUI）入口。
 - `tests/`：基础 pytest 测试，覆盖稳定检测、计价和 Mock 交易流程。
 - `docs/`：模块设计、Mock 模式、数据库、API、硬件接线、校准说明。
 - `data/`：本地数据库、测试/采集图片、模型文件（`best.pt`、`best.onnx` 等）。不要提交或依赖大型生成数据。
@@ -58,6 +58,7 @@ python scripts/sync_db.py
 python scripts/speed_test.py
 python scripts/stream_test.py
 python scripts/weighing_test.py
+python scripts/weighing_test_gui.py
 ```
 
 API 默认监听 `127.0.0.1:8000`：
@@ -114,7 +115,7 @@ python -m pytest
 - `MockFruitVegetableDetector` 固定返回 `{"label": "apple", "confidence": 0.97}`。
 - 初始化数据库会创建 `products`、`transactions`、`calibration` 三张表，并 upsert `apple`、`banana`、`orange` 默认价格。
 - `scripts/calibrate_scale.py` 已完整实现：空载去皮 → 多点放砝码采集 → 过原点线性回归计算 `scale_factor` → 写入 `calibration` 表 → 空载回零验证；直接驱动真实 `HX711Sensor`（无 mock 分支，初始化失败即退出）。
-- `HX711Sensor` 已完整实现：使用 RPi.GPIO 驱动树莓派 GPIO，通过位操作读取 HX711 24 位 ADC 值，结合 `calibration` 表参数返回 kg 重量。支持 `tare()` 去皮、`read_raw_average()` 平均采样、`power_down/up()` 电源管理。引脚通过 `config.yaml` 的 `weighing.dout_pin/sck_pin` 配置。
+- `HX711Sensor` 已完整实现：使用 RPi.GPIO 驱动树莓派 GPIO，通过位操作读取 HX711 24 位 ADC 值，结合 `calibration` 表参数返回 kg 重量。支持 `tare()` 去皮、`read_raw_median()` 中位数采样、`power_down/up()` 电源管理。引脚通过 `config.yaml` 的 `weighing.dout_pin/sck_pin` 配置。
 - `YOLODetector` 已完整实现：支持 65 类果蔬分类，通过 ONNX Runtime 3 线程 CPU 推理，输入预处理为 256x256 中心裁剪，返回 `{"label", "confidence", "zh_name"}` 格式字典。`predict()` 同时兼容 `str`（路径）和 `np.ndarray`（内存矩阵）两种输入。
 - `USBCamera` 已完整实现：常开设备，缓冲区设为 1 防止拍到过期帧，`capture()` 连读 3 次清缓存后抓拍，`get_stream_frame()` 为 GUI 视频流提供实时画面。
 - `camera_interface.py` 的 `capture()` 方法签名已从返回文件路径改为返回 `np.ndarray`（内存直传）。

@@ -20,7 +20,7 @@
 
 ## weighing
 
-`app/weighing` 定义称重接口（返回 kg 的 `float`）。`MockWeightSensor` 模拟稳定重量，`StabilityDetector` 判断滑动窗口是否稳定；`HX711Sensor` 已完整实现，通过 RPi.GPIO 位操作读取 24 位 ADC，结合 `calibration` 表参数换算 kg，支持去皮、平均采样和电源管理。`CalibrationService` 负责校准参数读写。
+`app/weighing` 定义称重接口（返回 kg 的 `float`）。`MockWeightSensor` 模拟稳定重量，`StabilityDetector` 判断滑动窗口是否稳定；`HX711Sensor` 已完整实现，通过 RPi.GPIO 位操作读取 24 位 ADC，结合 `calibration` 表参数换算 kg，支持去皮、中位数采样和电源管理。`CalibrationService` 负责校准参数读写。
 
 ## pricing
 
@@ -40,7 +40,7 @@
 
 ## scripts
 
-`scripts` 提供初始化数据库（`init_db.py`）、启动 GUI/API（`run_gui.py`/`run_api.py`）、完整 HX711 校准（`calibrate_scale.py`）、拍照测试（`capture_test_image.py`）、把 `label_map.json` 全部 65 类同步进 `products`（`sync_db.py`）、YOLO 测速（`speed_test.py`）、摄像头实时流测试（`stream_test.py`）和 HX711 实时读数验证（`weighing_test.py`）入口。各脚本经 `_bootstrap.py` 把项目根注入 `sys.path`。
+`scripts` 提供初始化数据库（`init_db.py`）、启动 GUI/API（`run_gui.py`/`run_api.py`）、完整 HX711 校准（`calibrate_scale.py`）、拍照测试（`capture_test_image.py`）、把 `label_map.json` 全部 65 类同步进 `products`（`sync_db.py`）、YOLO 测速（`speed_test.py`）、摄像头实时流测试（`stream_test.py`）、HX711 实时读数验证（`weighing_test.py`）和全屏称重显示（`weighing_test_gui.py`，整数克实时大字显示）入口。各脚本经 `_bootstrap.py` 把项目根注入 `sys.path`。
 
 ## tests
 

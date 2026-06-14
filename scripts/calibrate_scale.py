@@ -30,8 +30,8 @@ from app.weighing.hx711_sensor import HX711Sensor
 
 
 def _read_stable(sensor: HX711Sensor, samples: int = 5) -> float:
-    """连续读取 3 组均值取总平均，提高稳定性。"""
-    values = [sensor.read_raw_average(samples) for _ in range(3)]
+    """连续读取 3 组中位数再取平均，提高稳定性。"""
+    values = [sensor.read_raw_median(samples) for _ in range(3)]
     return sum(values) / len(values)
 
 

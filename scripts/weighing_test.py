@@ -39,7 +39,7 @@ def main() -> None:
 
     try:
         while True:
-            raw = sensor.read_raw_average(3)
+            raw = sensor.read_raw_median(3)
             weight = sensor.read_weight()
             print(f"{raw:>10.1f} | {weight:>10.4f}")
             time.sleep(0.3)

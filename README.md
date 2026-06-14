@@ -17,7 +17,7 @@ Mock 模式保留作为开发/调试备选，可通过 `config.yaml` 切换回�
 
 - `YOLODetector` 已完成：65 类果蔬分类，ONNX Runtime 3 线程 CPU 推理，256x256 中心裁剪预处理，支持内存矩阵和文件路径双输入。
 - `USBCamera` 已完成：常开设备，缓冲区 1 防过期帧，`capture()` 连读 3 次清缓存后抓拍，`get_stream_frame()` 为 GUI 提供实时视频流。
-- `HX711Sensor` 已完成：RPi.GPIO 位操作读取 24 位 ADC，结合 `calibration` 表参数换算 kg，支持去皮、平均采样和电源管理。
+- `HX711Sensor` 已完成：RPi.GPIO 位操作读取 24 位 ADC，结合 `calibration` 表参数换算 kg，支持去皮、中位数采样和电源管理。
 - `StabilityDetector` 使用滑动窗口判断重量稳定。
 - Mock 组件保留作为开发/调试备选：`MockWeightSensor`（约 0.52 kg）、`MockCamera`（测试图）、`MockFruitVegetableDetector`（固定 `apple` 0.97），详见 `docs/mock_mode.md`。
 - SQLite `products` 表支持 65 类果蔬价格（通过 `scripts/sync_db.py` 同步）。
@@ -173,5 +173,6 @@ python scripts/calibrate_scale.py
 python scripts/sync_db.py        # 同步 65 类果蔬到数据库
 python scripts/speed_test.py     # 测试 YOLO 推理速度
 python scripts/stream_test.py    # 测试 USB 摄像头实时流
+python scripts/weighing_test_gui.py  # 全屏实时显示称重（整数克）
 python -m pytest
 ```
