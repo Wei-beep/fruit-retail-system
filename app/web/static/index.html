@@ -111,21 +111,35 @@
       <div class="pay-left">
         <div class="qr-card">
           <div class="qr"><img class="qr-img" src="/static/payqr.svg" alt="支付二维码" /></div>
-          <div class="qr-label">扫码支付</div>
+          <div class="qr-title">扫码支付</div>
+          <div class="qr-sub">请使用微信或支付宝扫码完成支付</div>
         </div>
-        <div class="pay-hint">请扫码完成支付</div>
       </div>
       <!-- 右：订单确认 + 完成 -->
       <div class="pay-right">
         <div class="receipt">
-          <div class="receipt-title">订单确认</div>
-          <div class="receipt-row"><span id="payName">—</span><b id="payTotal">¥—</b></div>
+          <div class="receipt-head">
+            <span class="receipt-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff"
+                   stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="4" width="14" height="17" rx="2"></rect>
+                <path d="M9 4.2h6"></path>
+                <path d="M8.4 13l2.2 2.2L15 11"></path>
+              </svg>
+            </span>
+            <span class="receipt-title">订单确认</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-name" id="payName">—</span>
+            <b class="receipt-total" id="payTotal">¥—</b>
+          </div>
+          <div class="receipt-divider"></div>
           <div class="receipt-meta">
             <span><span id="payWeight">—</span> kg × ¥<span id="payUnit">—</span>/kg</span>
             <span class="order-no">单号 #<span id="payOrder">—</span></span>
           </div>
         </div>
-        <button class="btn btn-primary btn-wide" data-action="finish">完成</button>
+        <button class="btn btn-primary btn-wide pay-finish" data-action="finish">完成</button>
       </div>
     </div>
 

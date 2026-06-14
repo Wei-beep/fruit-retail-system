@@ -262,39 +262,50 @@ body { display: flex; align-items: center; justify-content: center; }
 .cell .cell-price { font-size: 13px; color: var(--accent); font-weight: 600; }
 .grid-empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 0; }
 
-/* ⑥ 扫码支付：左二维码 / 右订单确认 */
-.overlay-pay { flex-direction: row; align-items: stretch; gap: 0; padding: 0; }
-.pay-left {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 16px; padding: 24px; border-right: 1px solid var(--border);
+/* ⑥ 扫码支付：左二维码卡片 / 右订单确认 + 完成 */
+.overlay-pay {
+  flex-direction: row; align-items: center; justify-content: center;
+  gap: 28px; padding: 24px 30px;
 }
-.pay-right {
-  flex: 1; display: flex; flex-direction: column; justify-content: center;
-  gap: 20px; padding: 28px;
-}
-.receipt {
-  width: 100%; background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px 20px;
-}
-.receipt-title { font-size: 15px; color: var(--text-muted); margin-bottom: 8px; }
-.receipt-row { display: flex; align-items: baseline; justify-content: space-between; }
-.receipt-row span { font-size: 26px; font-weight: 800; }
-.receipt-row b { font-size: 32px; font-weight: 900; color: var(--accent); }
-.receipt-meta {
-  display: flex; justify-content: space-between; margin-top: 8px;
-  color: var(--text-muted); font-size: 14px; border-top: 1px dashed var(--border); padding-top: 8px;
-}
-.qr-area { display: flex; justify-content: center; }
+.pay-left { flex: 0 0 auto; }
+.pay-right { flex: 1; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
+
+/* 左侧二维码卡片 */
 .qr-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 22px;
+  padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, .05);
 }
 /* 二维码本体不要圆角，否则定位块被裁切影响扫描 */
-.qr { width: 180px; height: 180px; background: #fff; border-radius: 0; }
+.qr { width: 256px; height: 256px; background: #fff; border-radius: 0; }
 .qr-img { width: 100%; height: 100%; display: block; }
-.qr-label { font-size: 16px; font-weight: 700; color: var(--accent); }
-.pay-hint { color: var(--text-muted); font-size: 15px; }
-.pay-right .btn-wide { width: 100%; }
+.qr-title { font-size: 24px; font-weight: 800; color: var(--text); margin-top: 2px; }
+.qr-sub { font-size: 14px; color: var(--text-muted); }
+
+/* 右侧订单确认卡片 */
+.receipt {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 22px 24px;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, .05);
+}
+.receipt-head { display: flex; align-items: center; gap: 10px; }
+.receipt-icon {
+  width: 34px; height: 34px; border-radius: 10px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+}
+.receipt-title { font-size: 17px; font-weight: 700; color: var(--text-muted); }
+.receipt-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px;
+}
+.receipt-name { font-size: 34px; font-weight: 800; color: var(--text); line-height: 1.1; }
+.receipt-total { font-size: 36px; font-weight: 900; color: var(--accent); line-height: 1; }
+.receipt-divider { border-top: 1px dashed var(--border-strong); margin: 16px 0; }
+.receipt-meta {
+  display: flex; justify-content: space-between; color: var(--text-muted); font-size: 15px;
+}
+
+/* 完成按钮 */
+.pay-finish { padding: 18px; font-size: 22px; border-radius: 14px; }
 
 /* ============ 连接提示 ============ */
 .conn-toast {
