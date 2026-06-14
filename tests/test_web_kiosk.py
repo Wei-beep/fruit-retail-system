@@ -122,6 +122,16 @@ def test_web_rest_endpoints() -> None:
         assert any(p["label"] == "apple" for p in products)
 
 
+def test_web_exit_endpoint_sets_shutdown() -> None:
+    from app.web.lifecycle import shutdown_event
+    shutdown_event.clear()
+    app = create_web_app(_mock_config())
+    with TestClient(app) as client:
+        assert client.post("/api/exit").json() == {"status": "exiting"}
+        assert shutdown_event.is_set()
+    shutdown_event.clear()
+
+
 def test_web_ws_full_flow() -> None:
     app = create_web_app(_mock_config())
     with TestClient(app) as client:

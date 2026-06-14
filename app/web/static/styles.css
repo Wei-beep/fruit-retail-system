@@ -19,7 +19,15 @@
     "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box; margin: 0; padding: 0;
+  /* 触摸自助场景：禁止划动选中文本、长按菜单、点按高亮 */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
 
 html, body {
   width: 100%; height: 100%;
@@ -28,8 +36,16 @@ html, body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+  touch-action: manipulation;   /* 禁止双击缩放 */
+  overscroll-behavior: none;     /* 禁止滑动回弹/链式滚动 */
 }
 body { display: flex; align-items: center; justify-content: center; }
+
+/* 图片不可拖拽/长按保存 */
+img { -webkit-user-drag: none; user-drag: none; }
+
+/* 搜索框等输入控件仍允许正常输入与选择 */
+input, textarea { -webkit-user-select: text; user-select: text; }
 
 /* ============ 固定 800×480 舞台 ============ */
 .stage {
@@ -43,12 +59,13 @@ body { display: flex; align-items: center; justify-content: center; }
 /* ============ 顶部进度条 ============ */
 .progress {
   height: 60px; flex: 0 0 60px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 10px;
+  display: flex; align-items: center; justify-content: space-between;
   background: var(--card);
   border-bottom: 1px solid var(--border);
-  padding: 0 26px;
+  padding: 0 14px;
 }
+/* 进度步骤靠左上角 */
+.steps { display: flex; align-items: center; gap: 10px; }
 .step { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
 .step .dot {
   width: 26px; height: 26px; border-radius: 50%;
@@ -188,8 +205,35 @@ body { display: flex; align-items: center; justify-content: center; }
 .btn-primary:active { background: var(--accent-dark); }
 .btn-ghost { background: var(--bg); color: var(--text); border: 1px solid var(--border-strong); }
 .btn-warn { background: var(--warn); color: #fff; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-danger:active { background: #b91c1c; }
 .btn-sm { flex: 0 0 auto; padding: 8px 16px; font-size: 15px; }
 .btn-wide { width: 100%; flex: none; }
+
+/* ============ 退出 ✕ 按钮（右上角） ============ */
+.exit-btn {
+  flex: 0 0 auto; width: 36px; height: 36px; border-radius: 9px;
+  border: none; cursor: pointer; font-family: var(--font);
+  font-size: 18px; font-weight: 700; line-height: 1;
+  background: #dc2626; color: #fff;
+}
+.exit-btn:active { background: #b91c1c; transform: scale(.96); }
+
+/* ============ 退出确认弹窗 ============ */
+.modal {
+  position: absolute; inset: 0; z-index: 100;
+  background: rgba(17, 24, 39, .45);
+  display: flex; align-items: center; justify-content: center;
+}
+.modal[hidden] { display: none; }
+.modal-card {
+  width: 380px; background: var(--card); border-radius: 16px;
+  padding: 26px 24px 20px; text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+}
+.modal-title { font-size: 24px; font-weight: 800; color: var(--text); }
+.modal-sub { margin-top: 10px; font-size: 15px; color: var(--text-muted); }
+.modal-actions { display: flex; gap: 12px; margin-top: 22px; }
 
 /* ============ 覆盖层（⑤ ⑥） ============ */
 .overlay {
@@ -212,8 +256,9 @@ body { display: flex; align-items: center; justify-content: center; }
 .search:focus { border-color: var(--accent); }
 .selector-body { flex: 1; display: flex; min-height: 0; }
 .cats {
-  flex: 0 0 130px; background: var(--card); border-right: 1px solid var(--border);
+  flex: 0 0 156px; background: var(--card); border-right: 1px solid var(--border);
   overflow-y: auto; padding: 8px 0;
+  touch-action: none;   /* 滚动改由 JS 拖动控制，避免触摸环境无法惯性滚动 */
 }
 .cat {
   padding: 12px 16px; font-size: 16px; font-weight: 600; color: var(--text-muted);
@@ -223,6 +268,7 @@ body { display: flex; align-items: center; justify-content: center; }
 .grid {
   flex: 1; overflow-y: auto; padding: 14px;
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; align-content: start;
+  touch-action: none;   /* 同上：手指拖动滚动由 JS 控制 */
 }
 .cell {
   background: var(--card); border: 1px solid var(--border); border-radius: 10px;
@@ -234,32 +280,50 @@ body { display: flex; align-items: center; justify-content: center; }
 .cell .cell-price { font-size: 13px; color: var(--accent); font-weight: 600; }
 .grid-empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 0; }
 
-/* ⑥ 扫码支付 */
-.overlay-pay { align-items: center; justify-content: center; gap: 18px; padding: 24px; }
-.receipt {
-  width: 460px; background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 16px 20px;
+/* ⑥ 扫码支付：左二维码卡片 / 右订单确认 + 完成 */
+.overlay-pay {
+  flex-direction: row; align-items: center; justify-content: center;
+  gap: 28px; padding: 24px 30px;
 }
-.receipt-title { font-size: 15px; color: var(--text-muted); margin-bottom: 8px; }
-.receipt-row { display: flex; align-items: baseline; justify-content: space-between; }
-.receipt-row span { font-size: 26px; font-weight: 800; }
-.receipt-row b { font-size: 32px; font-weight: 900; color: var(--accent); }
-.receipt-meta {
-  display: flex; justify-content: space-between; margin-top: 8px;
-  color: var(--text-muted); font-size: 14px; border-top: 1px dashed var(--border); padding-top: 8px;
-}
-.qr-area { display: flex; gap: 24px; }
+.pay-left { flex: 0 0 auto; }
+.pay-right { flex: 1; max-width: 440px; display: flex; flex-direction: column; gap: 20px; }
+
+/* 左侧二维码卡片 */
 .qr-card {
-  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 22px;
+  padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 12px;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, .05);
 }
-.qr { width: 120px; height: 120px; border-radius: 8px; overflow: hidden; }
-.qr-svg { width: 100%; height: 100%; display: block; }
-.qr-card.wx .qr-label { color: #09bb07; }
-.qr-card.ali .qr-label { color: #1296db; }
-.qr-label { font-size: 15px; font-weight: 700; }
-.pay-hint { color: var(--text-muted); font-size: 15px; }
-.overlay-pay .btn-wide { width: 460px; }
+/* 二维码本体不要圆角，否则定位块被裁切影响扫描 */
+.qr { width: 256px; height: 256px; background: #fff; border-radius: 0; }
+.qr-img { width: 100%; height: 100%; display: block; }
+.qr-title { font-size: 24px; font-weight: 800; color: var(--text); margin-top: 2px; }
+.qr-sub { font-size: 14px; color: var(--text-muted); }
+
+/* 右侧订单确认卡片 */
+.receipt {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 18px; padding: 22px 24px;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, .05);
+}
+.receipt-head { display: flex; align-items: center; gap: 10px; }
+.receipt-icon {
+  width: 34px; height: 34px; border-radius: 10px; background: var(--accent);
+  display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
+}
+.receipt-title { font-size: 17px; font-weight: 700; color: var(--text-muted); }
+.receipt-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px;
+}
+.receipt-name { font-size: 34px; font-weight: 800; color: var(--text); line-height: 1.1; }
+.receipt-total { font-size: 36px; font-weight: 900; color: var(--accent); line-height: 1; }
+.receipt-divider { border-top: 1px dashed var(--border-strong); margin: 16px 0; }
+.receipt-meta {
+  display: flex; justify-content: space-between; color: var(--text-muted); font-size: 15px;
+}
+
+/* 完成按钮 */
+.pay-finish { padding: 18px; font-size: 22px; border-radius: 14px; }
 
 /* ============ 连接提示 ============ */
 .conn-toast {

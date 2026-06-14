@@ -22,6 +22,7 @@ from app.core.config import load_config
 from app.db.init_db import initialize_database
 from app.pricing.price_service import PriceService
 from app.web.broadcaster import Broadcaster
+from app.web.lifecycle import request_shutdown
 from app.web.session import KioskSession
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -53,6 +54,12 @@ def create_web_app(config: dict | None = None) -> FastAPI:
     @app.get("/api/ui/products")
     def products() -> list[dict]:
         return price_service.list_products()
+
+    @app.post("/api/exit")
+    def exit_app() -> dict:
+        """前端确认退出：置位关停信号，由 launcher 终止 Chromium 并结束进程。"""
+        request_shutdown()
+        return {"status": "exiting"}
 
     @app.get("/")
     def index() -> FileResponse:

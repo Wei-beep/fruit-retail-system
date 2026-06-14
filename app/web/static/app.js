@@ -29,6 +29,7 @@ const els = {
   payUnit: document.getElementById("payUnit"),
   payOrder: document.getElementById("payOrder"),
   connToast: document.getElementById("connToast"),
+  exitModal: document.getElementById("exitModal"),
 };
 
 let ws = null;
@@ -219,31 +220,6 @@ function bindVideo() {
   els.video.src = "/stream/video";
 }
 
-/* ---------------- 二维码占位（伪 QR 图案） ---------------- */
-function fillQR(groupId, seed) {
-  const g = document.getElementById(groupId);
-  if (!g) return;
-  const n = 21, cell = 100 / n;
-  let rng = seed;
-  const rand = () => { rng = (rng * 1103515245 + 12345) & 0x7fffffff; return rng / 0x7fffffff; };
-  let out = "";
-  const finder = (ox, oy) => {
-    for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) {
-      const edge = x === 0 || x === 6 || y === 0 || y === 6;
-      const core = x >= 2 && x <= 4 && y >= 2 && y <= 4;
-      if (edge || core)
-        out += `<rect x="${(ox + x) * cell}" y="${(oy + y) * cell}" width="${cell}" height="${cell}"/>`;
-    }
-  };
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-    const inFinder = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
-    if (!inFinder && rand() > 0.5)
-      out += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}"/>`;
-  }
-  finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
-  g.innerHTML = out;
-}
-
 /* ---------------- 按钮（事件委托） ---------------- */
 stage.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
@@ -254,14 +230,52 @@ stage.addEventListener("click", (e) => {
   else if (action === "open-selector") openSelector();
   else if (action === "close-selector") setState(returnState);
   else if (action === "finish") send({ type: "clear" });
+  else if (action === "open-exit") els.exitModal.hidden = false;
+  else if (action === "exit-cancel") els.exitModal.hidden = true;
+  else if (action === "exit-confirm") doExit();
 });
+
+/* 退出：确认后通知后端结束 kiosk（演示模式禁用） */
+function doExit() {
+  if (DEMO) { els.exitModal.hidden = true; showToast("演示模式：退出已禁用"); return; }
+  const title = els.exitModal.querySelector(".modal-title");
+  if (title) title.textContent = "正在退出…";
+  fetch("/api/exit", { method: "POST" }).catch(() => {});
+}
 els.search.addEventListener("input", renderGrid);
+
+/* ---------------- 触摸拖动滚动（左侧分类 / 右侧网格） ----------------
+ * 触摸 kiosk 下原生惯性滚动常失效（触摸被当鼠标），改用 pointer 事件 1:1 拖动滚动，
+ * 同时区分"轻点选择"与"滑动滚动"：滑动后吞掉误触发的 click，避免顺手选中分类/商品。 */
+function enableDragScroll(el) {
+  if (!el) return;
+  let active = false, startY = 0, startTop = 0, moved = false;
+  el.addEventListener("pointerdown", (e) => {
+    active = true; moved = false; startY = e.clientY; startTop = el.scrollTop;
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!active) return;
+    const dy = e.clientY - startY;
+    if (!moved && Math.abs(dy) > 6) {
+      moved = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    if (moved) { el.scrollTop = startTop - dy; e.preventDefault(); }
+  });
+  const stop = () => { active = false; };
+  el.addEventListener("pointerup", stop);
+  el.addEventListener("pointercancel", stop);
+  el.addEventListener("pointerleave", stop);
+  el.addEventListener("click", (e) => {
+    if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+  }, true);
+}
 
 /* ---------------- 启动 ---------------- */
 function init() {
-  fillQR("qrPatternA", 1234567);
-  fillQR("qrPatternB", 7654321);
   bindVideo();
+  enableDragScroll(els.cats);
+  enableDragScroll(els.grid);
   setState("idle");
   if (DEMO) startDemo(); else connect();
 }
