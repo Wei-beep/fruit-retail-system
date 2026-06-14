@@ -17,3 +17,13 @@ class PriceService:
 
     def update_price(self, label: str, name_cn: str, price_per_kg: float) -> None:
         repositories.upsert_product(label, name_cn, price_per_kg)
+
+    def list_products(self) -> list[dict]:
+        return [
+            {
+                "label": product["label"],
+                "name_cn": product["name_cn"],
+                "price_per_kg": float(product["price_per_kg"]),
+            }
+            for product in repositories.list_products()
+        ]

@@ -80,21 +80,36 @@ class YOLODetector(FruitVegetableDetector):
             # --- 4. 结果解析 ---
             probs = outputs[0][0]
             idx = int(np.argmax(probs))
-            confidence = float(probs[idx]) 
-            
+            confidence = float(probs[idx])
+
             # 提取英文标签
             label_info = self.label_map.get(str(idx), {"en": "unknown", "zh": "未知"})
             english_label = label_info["en"]
-            
+
+            # top-3 候选：供前端低置信兜底时让顾客手动选择
+            top_idx = [int(i) for i in np.argsort(probs)[-3:][::-1]]
+            candidates = []
+            for ci in top_idx:
+                info = self.label_map.get(str(ci), {"en": "unknown", "zh": "未知"})
+                candidates.append(
+                    {"label": info["en"], "zh_name": info["zh"], "confidence": float(probs[ci])}
+                )
+
             # 过滤低置信度（可选）
             if confidence < self.confidence_threshold:
-                return {"label": "unknown", "confidence": confidence, "zh_name": "置信度过低"}
-            
+                return {
+                    "label": "unknown",
+                    "confidence": confidence,
+                    "zh_name": "置信度过低",
+                    "candidates": candidates,
+                }
+
             # --- 4. 返回契约字典 ---
             return {
                 "label": english_label,  # 队友拿这个去数据库查价格
                 "confidence": confidence,
-                "zh_name": label_info["zh"] # 额外塞入中文名，如果他的 UI 想直接显示中文就能用到
+                "zh_name": label_info["zh"], # 额外塞入中文名，如果他的 UI 想直接显示中文就能用到
+                "candidates": candidates,
             }
             
         except Exception as e:

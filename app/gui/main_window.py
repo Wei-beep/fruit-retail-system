@@ -5,22 +5,13 @@ from tkinter import ttk
 from PIL import Image, ImageTk  # 引入 PIL 用于渲染视频帧
 
 from app.camera.camera_interface import Camera
-from app.camera.mock_camera import MockCamera
-from app.camera.usb_camera import USBCamera
 from app.core.config import load_config
 from app.core.constants import PROJECT_TITLE
 from app.core.display import configure_gui_display
 from app.db.init_db import initialize_database
 from app.gui.gui_controller import GUIController
 from app.gui.performance_monitor import PerformanceMonitor
-from app.pricing.price_service import PriceService
-from app.pricing.transaction_service import TransactionService
-from app.vision.detector import YOLODetector
-from app.vision.mock_detector import MockFruitVegetableDetector
-from app.weighing.hx711_sensor import HX711Sensor
-from app.weighing.mock_sensor import MockWeightSensor
-from app.weighing.stability import StabilityDetector
-from app.workflow.transaction_flow import TransactionFlow
+from app.workflow.factory import create_transaction_flow
 
 
 class MainWindow:
@@ -181,50 +172,6 @@ class MainWindow:
         self.controller.stop()
         self._monitor.stop()
         self.root.destroy()
-
-
-def create_transaction_flow(config: dict) -> TransactionFlow:
-    camera_config = config["camera"]
-    weighing_config = config["weighing"]
-    vision_config = config["vision"]
-
-    if camera_config["mode"] == "mock":
-        camera = MockCamera(camera_config["test_image_dir"], camera_config["image_save_dir"])
-    else:
-        camera = USBCamera(
-            camera_config["device_index"],
-            camera_config["image_save_dir"],
-            camera_config["width"],
-            camera_config["height"],
-        )
-
-    if weighing_config["mode"] == "mock":
-        weight_sensor = MockWeightSensor()
-    else:
-        weight_sensor = HX711Sensor(
-            dout_pin=weighing_config["dout_pin"],
-            sck_pin=weighing_config["sck_pin"],
-            gain=weighing_config.get("gain", 128),
-        )
-
-    if vision_config["mode"] == "mock":
-        detector = MockFruitVegetableDetector()
-    else:
-        detector = YOLODetector(vision_config["model_path"], vision_config["confidence_threshold"])
-
-    return TransactionFlow(
-        weight_sensor=weight_sensor,
-        stability_detector=StabilityDetector(
-            weighing_config["stable_window_size"],
-            weighing_config["stable_threshold_kg"],
-        ),
-        camera=camera,
-        detector=detector,
-        price_service=PriceService(),
-        transaction_service=TransactionService(),
-        min_valid_weight_kg=weighing_config["min_valid_weight_kg"],
-        max_valid_weight_kg=weighing_config["max_valid_weight_kg"],
-    )
 
 
 def run_gui() -> None:

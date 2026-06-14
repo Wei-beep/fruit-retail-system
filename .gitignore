@@ -40,6 +40,9 @@ data/images/captured/*
 data/models/*.onnx
 data/models/*.pt
 
+# Claude Code IPC pipes
+.lgd-nfy*
+
 # Logs and local OS/editor files
 *.log
 .DS_Store

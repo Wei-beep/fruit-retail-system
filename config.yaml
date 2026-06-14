@@ -31,6 +31,9 @@ api:
   port: 8000
 
 gui:
+  frontend: web        # web(默认 Chromium kiosk) | tk(旧 Tkinter)
+  web_port: 8000       # web 前端服务端口(127.0.0.1)
+  launch_browser: true # false 则只起服务、手动开浏览器调试
   width: 800
   height: 480
   fullscreen: true

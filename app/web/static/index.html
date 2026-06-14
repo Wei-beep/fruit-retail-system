@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=800, height=480, initial-scale=1, user-scalable=no" />
+  <title>果蔬自助称重</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <!-- 固定 800×480 舞台 -->
+  <div class="stage" id="stage" data-state="idle">
+
+    <!-- 顶部进度引导：放置 → 识别 → 确认 -->
+    <header class="progress" id="progress">
+      <div class="step" data-step="place">
+        <span class="dot">1</span><span class="step-label">放置</span>
+      </div>
+      <div class="bar"></div>
+      <div class="step" data-step="recognize">
+        <span class="dot">2</span><span class="step-label">识别</span>
+      </div>
+      <div class="bar"></div>
+      <div class="step" data-step="confirm">
+        <span class="dot">3</span><span class="step-label">确认</span>
+      </div>
+    </header>
+
+    <!-- 主体：左实时画面 + 右信息栏 -->
+    <main class="main">
+      <section class="camera">
+        <img id="video" class="video" alt="实时画面" />
+        <!-- 蓝色放置引导框（分类模型无真实 bbox，框为中心裁剪引导） -->
+        <div class="guide-box">
+          <span class="corner tl"></span><span class="corner tr"></span>
+          <span class="corner bl"></span><span class="corner br"></span>
+        </div>
+        <div class="camera-hint" id="cameraHint">请将商品放在框内</div>
+      </section>
+
+      <aside class="info">
+        <!-- ① 空闲：请放置 -->
+        <div class="panel panel-idle">
+          <div class="big-icon">⚖️</div>
+          <div class="lead">请将商品放到秤上</div>
+          <div class="weight-big"><span id="idleWeight">0</span><small> g</small></div>
+          <div class="sub">放好后将自动识别</div>
+        </div>
+
+        <!-- ② 识别中 -->
+        <div class="panel panel-recognizing">
+          <div class="spinner"></div>
+          <div class="lead">正在识别…</div>
+          <div class="weight-chip"><span id="recogWeight">0</span> g</div>
+        </div>
+
+        <!-- ③ 待确认（核心） -->
+        <div class="panel panel-review">
+          <div class="name-row">
+            <span class="name" id="reviewName">—</span>
+            <span class="conf-chip" id="reviewConf">置信度 —</span>
+          </div>
+          <div class="meta">
+            <div class="meta-item"><label>重量</label><b><span id="reviewWeight">—</span> kg</b></div>
+            <div class="meta-item"><label>单价</label><b>¥<span id="reviewUnit">—</span>/kg</b></div>
+          </div>
+          <div class="total">
+            <label>总价</label>
+            <div class="total-value">¥<span id="reviewTotal">—</span></div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" data-action="confirm">确认</button>
+            <button class="btn btn-ghost" data-action="clear">取消</button>
+          </div>
+          <button class="link-redo" data-action="open-selector">识别不对？手动选择 ›</button>
+        </div>
+
+        <!-- ④ 低置信兜底 -->
+        <div class="panel panel-lowconf">
+          <div class="warn-banner">⚠ 识别可能不准，请确认品类</div>
+          <div class="weight-chip"><span id="lowWeight">0</span> g</div>
+          <div class="candidates-title">可能是：</div>
+          <div class="candidates" id="candidates"><!-- JS 注入 --></div>
+          <div class="actions">
+            <button class="btn btn-warn" data-action="open-selector">查看全部品类</button>
+            <button class="btn btn-ghost" data-action="clear">取消</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- ⑤ 全屏品类选择器 -->
+    <div class="overlay overlay-selector" id="selector">
+      <div class="selector-head">
+        <span class="selector-title">选择商品品类</span>
+        <input class="search" id="search" type="search" placeholder="搜索名称…" />
+        <button class="btn btn-ghost btn-sm" data-action="close-selector">返回</button>
+      </div>
+      <div class="selector-body">
+        <nav class="cats" id="cats"><!-- JS 注入分类 Tab --></nav>
+        <div class="grid" id="grid"><!-- JS 注入 4 列网格 --></div>
+      </div>
+    </div>
+
+    <!-- ⑥ 扫码支付引导 -->
+    <div class="overlay overlay-pay" id="payment">
+      <div class="receipt">
+        <div class="receipt-title">订单确认</div>
+        <div class="receipt-row"><span id="payName">—</span><b id="payTotal">¥—</b></div>
+        <div class="receipt-meta">
+          <span><span id="payWeight">—</span> kg × ¥<span id="payUnit">—</span>/kg</span>
+          <span class="order-no">单号 #<span id="payOrder">—</span></span>
+        </div>
+      </div>
+      <div class="qr-area">
+        <div class="qr-card wx">
+          <div class="qr"><svg viewBox="0 0 100 100" class="qr-svg"><rect width="100" height="100" fill="#fff"/><g fill="#1f2937" id="qrPatternA"></g></svg></div>
+          <div class="qr-label">微信支付</div>
+        </div>
+        <div class="qr-card ali">
+          <div class="qr"><svg viewBox="0 0 100 100" class="qr-svg"><rect width="100" height="100" fill="#fff"/><g fill="#1f2937" id="qrPatternB"></g></svg></div>
+          <div class="qr-label">支付宝</div>
+        </div>
+      </div>
+      <div class="pay-hint">请扫码完成支付</div>
+      <button class="btn btn-primary btn-wide" data-action="finish">完成，下一位</button>
+    </div>
+
+    <!-- 连接状态提示 -->
+    <div class="conn-toast" id="connToast" hidden>连接已断开，重连中…</div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

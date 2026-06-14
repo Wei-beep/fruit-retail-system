@@ -4,7 +4,9 @@
 
 ## 项目现状
 
-这是一个面向 Raspberry Pi 触摸屏场景的果蔬识别与零售计价系统。当前已进入真实硬件/YOLO 联调阶段：USB 摄像头（常开模式，内存直传）、YOLO ONNX 推理引擎（3 线程锁死，支持 65 类果蔬识别）、HX711 称重驱动均已实现并接入 GUI。`config.yaml` 中 `camera.mode`、`vision.mode`、`weighing.mode` 默认均已切换为 `real`。
+这是一个面向 Raspberry Pi 触摸屏场景的果蔬识别与零售计价系统。当前已进入真实硬件/YOLO 联调阶段：USB 摄像头（常开模式，内存直传）、YOLO ONNX 推理引擎（3 线程锁死，支持 65 类果蔬识别）、HX711 称重驱动均已实现并接入前端。`config.yaml` 中 `camera.mode`、`vision.mode`、`weighing.mode` 默认均已切换为 `real`。
+
+前端有两套，由 `config.yaml` 的 `gui.frontend` 切换：默认 `web`（Chromium kiosk，`app/web`），保留 `tk`（旧 Tkinter，`app/gui`）。两者共用业务层（`create_transaction_flow` / `GUIController` / `TransactionFlow`），互不影响。
 
 Mock 模式保留作为开发/调试备选，仍可切换回 `mock` 运行。后续改代码时要保持 camera/mode、vision/mode、weighing/mode 三者均可通过配置独立切换，不要为了接入真实硬件破坏 Mock 闭环。
 
@@ -14,8 +16,8 @@ Mock 模式保留作为开发/调试备选，仍可切换回 `mock` 运行。后
 - SQLite，使用标准库 `sqlite3`，默认数据库路径为 `data/app.db`。
 - Tkinter GUI，默认 800x480，面向 Raspberry Pi DSI 7 寸触摸屏，包含实时视频流渲染。
 - YAML 配置，依赖 `pyyaml`，配置文件为 `config.yaml`。
-- FastAPI + uvicorn，当前 API 为预留和基础接口。
-- pytest 基础测试。
+- FastAPI + uvicorn：`app/api` 为对外预留接口；`app/web` 为默认 Web kiosk 前端的后端（WebSocket + MJPEG + 静态托管），`/ws` 依赖 `websockets`。
+- pytest 基础测试，Web 层测试依赖 `httpx`（Starlette TestClient）。
 - OpenCV（**已启用**）：USB 摄像头采集、YOLO 预处理均依赖 `cv2`；Mock 模式不应依赖它。
 - ONNX Runtime：`YOLODetector` 使用 `onnxruntime` 进行 CPU 推理，固定 3 线程。
 - Pillow：GUI 视频流渲染依赖 `PIL.Image` 做格式转换与缩放。
@@ -29,12 +31,13 @@ Mock 模式保留作为开发/调试备选，仍可切换回 `mock` 运行。后
 - `app/camera/`：摄像头接口、Mock 摄像头、USB 摄像头驱动（已实现）。
 - `app/weighing/`：称重接口、Mock 称重、稳定检测、HX711 驱动与校准服务（已实现）。
 - `app/pricing/`：价格查询/更新、总价计算、交易记录服务。
-- `app/workflow/`：交易流程编排。`prepare_transaction()` 只生成待确认交易，`confirm_transaction()` 才写入数据库。
-- `app/gui/`：Tkinter 界面和 GUI 控制器。GUI 调用业务层，不直接访问 SQL。
-- `app/api/`：FastAPI 服务和基础价格/交易路由。GUI 当前不依赖 API。
-- `scripts/`：数据库初始化、GUI/API 启动、称重校准、拍照测试、YOLO 测速、标签同步、摄像头测试、称重验证（命令行与全屏 GUI）入口。
-- `tests/`：基础 pytest 测试，覆盖稳定检测、计价和 Mock 交易流程。
-- `docs/`：模块设计、Mock 模式、数据库、API、硬件接线、校准说明。
+- `app/workflow/`：交易流程编排（`transaction_flow.py`）与组装工厂（`factory.py` 的 `create_transaction_flow`，前端共用）。`prepare_transaction()` 只生成待确认交易，`confirm_transaction()` 才写入数据库。
+- `app/gui/`：Tkinter 界面和 GUI 控制器（前端之一）。GUI 调用业务层，不直接访问 SQL。
+- `app/web/`：默认 Web kiosk 前端（FastAPI 应用 + 原生静态页 `static/`）。复用业务层，提供 WS/MJPEG/品类接口。与 `app/api` 职责分离。
+- `app/api/`：FastAPI 对外预留服务和基础价格/交易路由。本地前端闭环不依赖它。
+- `scripts/`：数据库初始化、GUI/Web/API 启动、称重校准、拍照测试、YOLO 测速、标签同步、摄像头测试、称重验证（命令行与全屏 GUI）入口。
+- `tests/`：基础 pytest 测试，覆盖稳定检测、计价、Mock 交易流程和 Web 层。
+- `docs/`：模块设计、Mock 模式、数据库、API、Web 前端、硬件接线、校准说明。
 - `data/`：本地数据库、测试/采集图片、模型文件（`best.pt`、`best.onnx` 等）。不要提交或依赖大型生成数据。
 
 ## 常用命令
@@ -49,8 +52,9 @@ pip install -r requirements.txt
 
 ```bash
 python scripts/init_db.py
-python scripts/run_gui.py
-python main.py
+python main.py                # 按 gui.frontend 启动默认前端(web)
+python scripts/run_web.py     # 直接启动 Web kiosk 前端
+python scripts/run_gui.py     # 启动旧 Tkinter 前端
 python scripts/run_api.py
 python scripts/calibrate_scale.py
 python scripts/capture_test_image.py
@@ -92,7 +96,9 @@ python -m pytest
 - 称重模块已实现并默认启用（`app/weighing/hx711_sensor.py`，`weighing.mode: real`）；首次使用前必须运行 `scripts/calibrate_scale.py` 完成校准。
 - 不要让 Mock 模式依赖 OpenCV、真实 YOLO 包、GPIO/HX711 库或硬件设备。
 - 真实硬件和真实 YOLO 逻辑只能在既有实现位置扩展：`app/camera/usb_camera.py`、`app/weighing/hx711_sensor.py`、`app/weighing/calibration.py`、`app/vision/detector.py` 以及相关脚本。
-- 识别器接口应保持 `predict(frame: np.ndarray) -> dict`，返回至少包含 `label` 和 `confidence`。已统一为内存直传，不再走硬盘路径。
+- 识别器接口应保持 `predict(frame: np.ndarray) -> dict`，返回至少包含 `label` 和 `confidence`；`candidates`（top-3）为可选附加键，Tk 路径忽略，Web 低置信兜底使用。
+- 两套前端共用 `create_transaction_flow`/`GUIController`；扩展业务层时新增参数必须带默认值以保持 Tk 现状（如 `prepare_transaction(include_candidates=False)`、`GUIController(auto_restart_after_confirm=True)`）。Web 后端在 `app/web`，与 `app/api` 分离；Tk 前端闭环不得依赖任何服务进程。
+- Web 模式单进程内只此一处持有摄像头/HX711（`KioskSession`），不要在 Web 路径再起第二个读取硬件的线程，避免并发位操作（820g 类假读数）。
 - 称重接口应返回 kg 单位的 `float`。`TransactionFlow.wait_for_stable_weight()` 负责稳定判断和有效重量范围过滤。
 - 交易流程必须保持"先生成待确认交易，用户确认后才写入 `transactions` 表"的语义。
 - GUI 不直接写 SQL；数据库访问集中经过 `app/db/repositories.py`，业务逻辑经过 `pricing`、`workflow` 等服务层。
