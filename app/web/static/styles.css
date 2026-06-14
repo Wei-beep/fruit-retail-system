@@ -262,10 +262,18 @@ body { display: flex; align-items: center; justify-content: center; }
 .cell .cell-price { font-size: 13px; color: var(--accent); font-weight: 600; }
 .grid-empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 0; }
 
-/* ⑥ 扫码支付 */
-.overlay-pay { align-items: center; justify-content: center; gap: 18px; padding: 24px; }
+/* ⑥ 扫码支付：左二维码 / 右订单确认 */
+.overlay-pay { flex-direction: row; align-items: stretch; gap: 0; padding: 0; }
+.pay-left {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; padding: 24px; border-right: 1px solid var(--border);
+}
+.pay-right {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  gap: 20px; padding: 28px;
+}
 .receipt {
-  width: 460px; background: var(--card); border: 1px solid var(--border);
+  width: 100%; background: var(--card); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 16px 20px;
 }
 .receipt-title { font-size: 15px; color: var(--text-muted); margin-bottom: 8px; }
@@ -282,11 +290,11 @@ body { display: flex; align-items: center; justify-content: center; }
   padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;
 }
 /* 二维码本体不要圆角，否则定位块被裁切影响扫描 */
-.qr { width: 150px; height: 150px; background: #fff; border-radius: 0; }
+.qr { width: 180px; height: 180px; background: #fff; border-radius: 0; }
 .qr-img { width: 100%; height: 100%; display: block; }
 .qr-label { font-size: 16px; font-weight: 700; color: var(--accent); }
 .pay-hint { color: var(--text-muted); font-size: 15px; }
-.overlay-pay .btn-wide { width: 460px; }
+.pay-right .btn-wide { width: 100%; }
 
 /* ============ 连接提示 ============ */
 .conn-toast {

@@ -105,25 +105,28 @@
       </div>
     </div>
 
-    <!-- ⑥ 扫码支付引导 -->
+    <!-- ⑥ 扫码支付引导：左=二维码，右=订单确认+完成 -->
     <div class="overlay overlay-pay" id="payment">
-      <div class="receipt">
-        <div class="receipt-title">订单确认</div>
-        <div class="receipt-row"><span id="payName">—</span><b id="payTotal">¥—</b></div>
-        <div class="receipt-meta">
-          <span><span id="payWeight">—</span> kg × ¥<span id="payUnit">—</span>/kg</span>
-          <span class="order-no">单号 #<span id="payOrder">—</span></span>
-        </div>
-      </div>
-      <!-- 占位：单个收款二维码（假逻辑，固定指向演示链接，非真实支付） -->
-      <div class="qr-area">
+      <!-- 左：扫码支付（占位二维码，假逻辑指向演示链接，非真实支付） -->
+      <div class="pay-left">
         <div class="qr-card">
           <div class="qr"><img class="qr-img" src="/static/payqr.svg" alt="支付二维码" /></div>
           <div class="qr-label">扫码支付</div>
         </div>
+        <div class="pay-hint">请扫码完成支付</div>
       </div>
-      <div class="pay-hint">请扫码完成支付</div>
-      <button class="btn btn-primary btn-wide" data-action="finish">完成，下一位</button>
+      <!-- 右：订单确认 + 完成 -->
+      <div class="pay-right">
+        <div class="receipt">
+          <div class="receipt-title">订单确认</div>
+          <div class="receipt-row"><span id="payName">—</span><b id="payTotal">¥—</b></div>
+          <div class="receipt-meta">
+            <span><span id="payWeight">—</span> kg × ¥<span id="payUnit">—</span>/kg</span>
+            <span class="order-no">单号 #<span id="payOrder">—</span></span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-wide" data-action="finish">完成</button>
+      </div>
     </div>
 
     <!-- 退出确认弹窗 -->
