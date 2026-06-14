@@ -34,13 +34,17 @@
 
 `app/gui` 使用 Tkinter 实现 800x480 窗口（默认 `fullscreen: true`）。`main_window.py` 负责界面展示，并按 `config.yaml` 各模块 `mode` 实例化对应的 camera/sensor/detector，集成右侧实时视频流面板（约 30 FPS，PIL 缩放渲染）；`gui_controller.py` 负责后台线程、确认、清除和退出（`stop()`）逻辑；界面右上角的“✕”退出按钮经 `MainWindow._on_close()` 停止后台线程并销毁窗口。`performance_monitor.py` 提供可选的后台性能监控（FPS/CPU/内存，依赖 psutil，由 `gui.monitor_performance` 开关）。
 
+## web
+
+`app/web` 是默认的 Chromium kiosk 前端的后端：自带 FastAPI 应用，托管原生静态页（`static/`），提供实时状态 `WS /ws`、`GET /stream/video`（MJPEG）和 `GET /api/ui/products`。`session.py` 复用 `create_transaction_flow` 与 `GUIController`（开启候选返回、关闭确认后自动重启），把控制器回调广播给前端，并以单生产者取帧线程供 MJPEG 消费；`broadcaster.py` 负责线程安全的 WebSocket 广播；`launcher.py` 的 `run_web()` 进程内起 uvicorn 并拉起 Chromium kiosk。与 `app/api`（对外 REST 契约）职责分离。详见 `docs/web_frontend.md`。
+
 ## api
 
 `app/api` 保留 FastAPI 服务结构。当前 `GET /health` 可用，价格和交易接口提供基础实现，后续可扩展鉴权、校验和设备状态接口。
 
 ## scripts
 
-`scripts` 提供初始化数据库（`init_db.py`）、启动 GUI/API（`run_gui.py`/`run_api.py`）、完整 HX711 校准（`calibrate_scale.py`）、拍照测试（`capture_test_image.py`）、把 `label_map.json` 全部 65 类同步进 `products`（`sync_db.py`）、YOLO 测速（`speed_test.py`）、摄像头实时流测试（`stream_test.py`）、HX711 实时读数验证（`weighing_test.py`）和全屏称重显示（`weighing_test_gui.py`，整数克实时大字显示）入口。各脚本经 `_bootstrap.py` 把项目根注入 `sys.path`。
+`scripts` 提供初始化数据库（`init_db.py`）、启动 GUI/Web/API（`run_gui.py`/`run_web.py`/`run_api.py`）、完整 HX711 校准（`calibrate_scale.py`）、拍照测试（`capture_test_image.py`）、把 `label_map.json` 全部 65 类同步进 `products`（`sync_db.py`）、YOLO 测速（`speed_test.py`）、摄像头实时流测试（`stream_test.py`）、HX711 实时读数验证（`weighing_test.py`）和全屏称重显示（`weighing_test_gui.py`，整数克实时大字显示）入口。各脚本经 `_bootstrap.py` 把项目根注入 `sys.path`。
 
 ## tests
 

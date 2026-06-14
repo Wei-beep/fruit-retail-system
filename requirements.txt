@@ -1,8 +1,10 @@
 fastapi
 pydantic
 uvicorn
+websockets       # uvicorn 接受 WebSocket 连接（Web kiosk 前端 /ws）所需
 pyyaml
 pytest
+httpx            # 测试依赖：Starlette TestClient（Web 层测试）
 numpy
 opencv-python
 onnxruntime

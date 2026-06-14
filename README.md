@@ -21,10 +21,9 @@ Mock 模式保留作为开发/调试备选，可通过 `config.yaml` 切换回�
 - `StabilityDetector` 使用滑动窗口判断重量稳定。
 - Mock 组件保留作为开发/调试备选：`MockWeightSensor`（约 0.52 kg）、`MockCamera`（测试图）、`MockFruitVegetableDetector`（固定 `apple` 0.97），详见 `docs/mock_mode.md`。
 - SQLite `products` 表支持 65 类果蔬价格（通过 `scripts/sync_db.py` 同步）。
-- Tkinter GUI 集成实时视频流，自动等待称重、识别、计价并显示待确认交易。
-- 用户点击"确认"后写入 `transactions` 表，点击"清除"则取消当前待确认交易。
-- GUI 右上角提供"✕"退出按钮，全屏无标题栏时也能关闭程序（退出时停止后台线程）。
-- FastAPI 基础服务结构，`GET /health` 可用，价格/交易接口已实现。
+- 两套前端共用业务层，由 `gui.frontend` 切换：默认 Web kiosk（`app/web`，FastAPI + 原生静态页，WebSocket 实时态 + MJPEG 视频 + 低置信候选/品类手动选品 + 扫码支付占位），保留旧 Tkinter（`app/gui`）。
+- 自动等待称重、识别、计价并显示待确认交易；确认后写入 `transactions` 表，取消则丢弃当前待确认交易。
+- FastAPI 对外预留服务结构（`app/api`），`GET /health` 可用，价格/交易接口已实现。
 
 ## 当前未实现/简化的部分
 
@@ -35,10 +34,10 @@ Mock 模式保留作为开发/调试备选，可通过 `config.yaml` 切换回�
 
 - Python 3
 - SQLite，使用标准库 `sqlite3`
-- Tkinter GUI，默认窗口 800x480，面向已连接的 Raspberry Pi DSI 7 寸触摸屏
+- 前端：默认 Chromium kiosk Web 前端（FastAPI + WebSocket + MJPEG，原生 HTML/CSS/JS），保留 Tkinter（800x480，面向 DSI 7 寸触摸屏）
 - YAML 配置，使用 `pyyaml`
-- FastAPI 结构预留
-- pytest 基础测试
+- FastAPI + uvicorn：`app/web` Web 前端后端（WS 依赖 `websockets`）、`app/api` 对外预留
+- pytest 基础测试（Web 层测试依赖 `httpx`）
 - OpenCV：USB 摄像头采集、YOLO 预处理
 - ONNX Runtime：YOLO CPU 推理，固定 3 线程
 - Pillow：GUI 视频流渲染
@@ -53,10 +52,11 @@ app/vision      YOLO 接口、Mock 识别器、YOLO ONNX 引擎
 app/camera      摄像头接口、Mock 摄像头、USB 摄像头驱动
 app/weighing    称重接口、Mock 称重、稳定检测、HX711 驱动和校准服务
 app/pricing     价格和交易服务
-app/workflow    交易流程编排
-app/gui         Tkinter 界面和控制器（含实时视频流）
-app/api         FastAPI 服务和路由
-scripts         初始化、运行 GUI/API、校准、拍照、测速、同步等脚本
+app/workflow    交易流程编排 + 组装工厂(create_transaction_flow)
+app/gui         Tkinter 界面和控制器（前端之一，含实时视频流）
+app/web         默认 Web kiosk 前端(FastAPI + 原生静态页，WS/MJPEG/品类接口)
+app/api         FastAPI 对外预留服务和路由
+scripts         初始化、运行 GUI/Web/API、校准、拍照、测速、同步等脚本
 data            数据库、图片和模型目录
 tests           基础 pytest 测试
 docs            模块、Mock、数据库、硬件、API、校准说明
@@ -88,19 +88,19 @@ python scripts/init_db.py
 
 该命令会创建 `data/app.db`，创建 `products`、`transactions`、`calibration` 三张表，并插入默认商品和校准数据。
 
-## 启动 GUI
+## 启动前端
+
+前端有两套，由 `config.yaml` 的 `gui.frontend` 切换：默认 `web`（Chromium kiosk），保留 `tk`（旧 Tkinter）。`python main.py` 按该配置分发。
 
 ```bash
-python scripts/run_gui.py
+python main.py            # 按 gui.frontend 启动默认前端(web)
+python scripts/run_web.py # 直接启动 Web kiosk
+python scripts/run_gui.py # 启动旧 Tkinter 前端
 ```
 
-也可以运行：
+**Web 前端（默认）**：浅色超市风触摸界面，`run_web()` 进程内起 uvicorn 并用 Chromium kiosk 全屏打开本地页面。调试时设 `gui.launch_browser: false`，再手动用浏览器打开 `http://127.0.0.1:8000`；访问 `/?demo=1` 可无硬件走查全部界面状态。协议与状态详见 `docs/web_frontend.md`。
 
-```bash
-python main.py
-```
-
-GUI 启动后会自动进入等待称重状态，不需要点击“开始识别”。当前默认 `fullscreen: true`，会尝试铺满 7 寸 DSI 触摸屏；从 SSH 启动时会自动尝试使用本机显示 `:0`。点击界面右上角的“✕”可退出程序（全屏下也可先按 `Esc` 退出全屏）。
+**Tkinter 前端**：自动进入等待称重状态，无需点击“开始识别”。默认 `fullscreen: true` 铺满 7 寸 DSI 触摸屏；从 SSH 启动时自动尝试使用本机显示 `:0`。右上角“✕”退出（全屏下可先按 `Esc`）。
 
 ## 启动 API
 
@@ -167,7 +167,9 @@ cd /home/pi/project/fruit_retail_system
 source .venv/bin/activate
 pip install -r requirements.txt
 python scripts/init_db.py
-python scripts/run_gui.py
+python main.py                # 默认 Web kiosk 前端
+python scripts/run_web.py     # 直接启动 Web kiosk 前端
+python scripts/run_gui.py     # 旧 Tkinter 前端
 python scripts/run_api.py
 python scripts/calibrate_scale.py
 python scripts/sync_db.py        # 同步 65 类果蔬到数据库

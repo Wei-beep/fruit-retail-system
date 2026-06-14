@@ -18,6 +18,14 @@ def get_product_by_label(label: str) -> dict | None:
     return _row_to_dict(row)
 
 
+def list_products() -> list[dict]:
+    with get_connection() as connection:
+        rows = connection.execute(
+            "SELECT id, label, name_cn, price_per_kg, updated_at FROM products ORDER BY name_cn"
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def upsert_product(label: str, name_cn: str, price_per_kg: float) -> None:
     with get_connection() as connection:
         connection.execute(
