@@ -244,9 +244,38 @@ function doExit() {
 }
 els.search.addEventListener("input", renderGrid);
 
+/* ---------------- 触摸拖动滚动（左侧分类 / 右侧网格） ----------------
+ * 触摸 kiosk 下原生惯性滚动常失效（触摸被当鼠标），改用 pointer 事件 1:1 拖动滚动，
+ * 同时区分"轻点选择"与"滑动滚动"：滑动后吞掉误触发的 click，避免顺手选中分类/商品。 */
+function enableDragScroll(el) {
+  if (!el) return;
+  let active = false, startY = 0, startTop = 0, moved = false;
+  el.addEventListener("pointerdown", (e) => {
+    active = true; moved = false; startY = e.clientY; startTop = el.scrollTop;
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!active) return;
+    const dy = e.clientY - startY;
+    if (!moved && Math.abs(dy) > 6) {
+      moved = true;
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    if (moved) { el.scrollTop = startTop - dy; e.preventDefault(); }
+  });
+  const stop = () => { active = false; };
+  el.addEventListener("pointerup", stop);
+  el.addEventListener("pointercancel", stop);
+  el.addEventListener("pointerleave", stop);
+  el.addEventListener("click", (e) => {
+    if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+  }, true);
+}
+
 /* ---------------- 启动 ---------------- */
 function init() {
   bindVideo();
+  enableDragScroll(els.cats);
+  enableDragScroll(els.grid);
   setState("idle");
   if (DEMO) startDemo(); else connect();
 }
