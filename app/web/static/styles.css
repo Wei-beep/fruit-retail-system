@@ -276,16 +276,15 @@ body { display: flex; align-items: center; justify-content: center; }
   display: flex; justify-content: space-between; margin-top: 8px;
   color: var(--text-muted); font-size: 14px; border-top: 1px dashed var(--border); padding-top: 8px;
 }
-.qr-area { display: flex; gap: 24px; }
+.qr-area { display: flex; justify-content: center; }
 .qr-card {
   background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-  padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px;
 }
-.qr { width: 120px; height: 120px; border-radius: 8px; overflow: hidden; }
-.qr-svg { width: 100%; height: 100%; display: block; }
-.qr-card.wx .qr-label { color: #09bb07; }
-.qr-card.ali .qr-label { color: #1296db; }
-.qr-label { font-size: 15px; font-weight: 700; }
+/* 二维码本体不要圆角，否则定位块被裁切影响扫描 */
+.qr { width: 150px; height: 150px; background: #fff; border-radius: 0; }
+.qr-img { width: 100%; height: 100%; display: block; }
+.qr-label { font-size: 16px; font-weight: 700; color: var(--accent); }
 .pay-hint { color: var(--text-muted); font-size: 15px; }
 .overlay-pay .btn-wide { width: 460px; }
 

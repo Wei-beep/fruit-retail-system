@@ -220,31 +220,6 @@ function bindVideo() {
   els.video.src = "/stream/video";
 }
 
-/* ---------------- 二维码占位（伪 QR 图案） ---------------- */
-function fillQR(groupId, seed) {
-  const g = document.getElementById(groupId);
-  if (!g) return;
-  const n = 21, cell = 100 / n;
-  let rng = seed;
-  const rand = () => { rng = (rng * 1103515245 + 12345) & 0x7fffffff; return rng / 0x7fffffff; };
-  let out = "";
-  const finder = (ox, oy) => {
-    for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) {
-      const edge = x === 0 || x === 6 || y === 0 || y === 6;
-      const core = x >= 2 && x <= 4 && y >= 2 && y <= 4;
-      if (edge || core)
-        out += `<rect x="${(ox + x) * cell}" y="${(oy + y) * cell}" width="${cell}" height="${cell}"/>`;
-    }
-  };
-  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
-    const inFinder = (x < 8 && y < 8) || (x > n - 9 && y < 8) || (x < 8 && y > n - 9);
-    if (!inFinder && rand() > 0.5)
-      out += `<rect x="${x * cell}" y="${y * cell}" width="${cell}" height="${cell}"/>`;
-  }
-  finder(0, 0); finder(n - 7, 0); finder(0, n - 7);
-  g.innerHTML = out;
-}
-
 /* ---------------- 按钮（事件委托） ---------------- */
 stage.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
@@ -271,8 +246,6 @@ els.search.addEventListener("input", renderGrid);
 
 /* ---------------- 启动 ---------------- */
 function init() {
-  fillQR("qrPatternA", 1234567);
-  fillQR("qrPatternB", 7654321);
   bindVideo();
   setState("idle");
   if (DEMO) startDemo(); else connect();
