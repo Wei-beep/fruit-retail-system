@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import statistics
 import time
 from typing import ClassVar
 
@@ -20,6 +21,10 @@ from app.weighing.hx711_interface import WeightSensor
 
 class HX711Sensor(WeightSensor):
     _gpio: ClassVar = None  # 类级缓存，避免重复 setmode
+
+    # 退化读数：全 0(0x000000) 或全 1(0xFFFFFF→-1)，表示 DOUT 卡死/无有效数据，
+    # 按标定换算会蹦出约 ±820g 的假读数，应丢弃重读。
+    _INVALID_RAW: ClassVar = (0, -1)
 
     def __init__(
         self,
@@ -67,7 +72,20 @@ class HX711Sensor(WeightSensor):
     # ------------------------------------------------------------------
     # 底层 HX711 通信
     # ------------------------------------------------------------------
-    def _read_raw(self) -> int:
+    def _read_raw(self, retries: int = 5) -> int:
+        """读取一次有效原始值，自动跳过退化读数（全 0 / 全 1）。
+
+        实测 DOUT 偶发卡在全 1（raw=-1，换算后约 820g）。重读到有效值即可；
+        retries 次后仍退化（如 DT 接线断开）才返回最后一次结果交由上层判断。
+        """
+        value = 0
+        for _ in range(retries + 1):
+            value = self._read_raw_once()
+            if value not in self._INVALID_RAW:
+                return value
+        return value
+
+    def _read_raw_once(self) -> int:
         """读取一次 HX711 原始 24 位有符号值（2's complement）。"""
         GPIO = self._gpio
 
@@ -95,19 +113,21 @@ class HX711Sensor(WeightSensor):
 
         return value
 
-    def read_raw_average(self, samples: int = 10) -> float:
-        """连续读取 samples 次并返回平均值。"""
-        total = 0
-        for _ in range(samples):
-            total += self._read_raw()
-        return total / samples
+    def read_raw_median(self, samples: int = 10) -> float:
+        """连续读取 samples 次并返回中位数。
+
+        中位数比均值更抗离群读数：即便混入个别非哨兵的异常值（_read_raw 只剔除
+        全 0 / 全 1 哨兵值），也不会把结果带偏，对去皮和校准精度更稳。
+        """
+        readings = [self._read_raw() for _ in range(samples)]
+        return statistics.median(readings)
 
     # ------------------------------------------------------------------
     # 去皮
     # ------------------------------------------------------------------
     def tare(self, samples: int = 10) -> float:
-        """空载调零：读取 samples 次原始值取平均，保存为 offset。"""
-        raw = self.read_raw_average(samples)
+        """空载调零：读取 samples 次原始值取中位数，保存为 offset。"""
+        raw = self.read_raw_median(samples)
         self.offset = raw
         return raw
 
