@@ -7,6 +7,137 @@
 
 const DEMO = new URLSearchParams(location.search).has("demo");
 
+/* ========================================================================
+ * i18n — 中/EN 文案表 + 热切换
+ * 静态文本走 HTML 的 data-i18n / data-i18n-ph / data-i18n-alt / data-i18n-aria；
+ * 动态渲染（待确认/低置信/支付/选择器）由各 render 函数读 t()，切换时重渲染。
+ * 商品名取自后端 name_cn（库内无英文名），属数据而非界面文案，不在此翻译。
+ * ===================================================================== */
+const I18N = {
+  zh: {
+    title: "果蔬自助称重",
+    step_place: "放置", step_recognize: "识别", step_confirm: "确认",
+    exit_aria: "退出",
+    video_alt: "实时画面",
+    camera_hint: "请将商品放在框内",
+    camera_hint_demo: "演示模式 · 实时画面占位",
+    idle_lead: "请将商品放到秤上",
+    idle_sub: "放好后将自动识别",
+    idle_weighing_sub: "请保持稳定，正在读数…",
+    recognizing_lead: "正在识别…",
+    conf_prefix: "置信度 ", conf_init: "置信度 —",
+    label_weight: "重量", label_unit: "单价", label_total: "总价",
+    btn_confirm: "确认", btn_cancel: "取消",
+    link_redo: "识别不对？手动选择 ›",
+    low_warn: "⚠ 识别可能不准，请确认品类",
+    low_maybe: "可能是：",
+    low_browse_all: "查看全部品类",
+    selector_title: "选择商品品类",
+    search_ph: "搜索名称…",
+    btn_back: "返回",
+    grid_empty: "没有匹配的商品",
+    cat_all: "全部", cat_other: "其他",
+    pay_scan: "扫码支付",
+    pay_sub: "请使用微信或支付宝扫码完成支付",
+    pay_qr_alt: "支付二维码",
+    receipt_title: "订单确认",
+    order_no: "单号",
+    btn_finish: "完成",
+    item_fallback: "商品",
+    exit_title: "确定要退出吗？",
+    exit_sub: "退出后将结束当前自助称重程序",
+    exiting: "正在退出…",
+    btn_no: "否", btn_yes_exit: "是，退出",
+    conn_lost: "连接已断开，重连中…",
+    error_prefix: "识别异常：",
+    demo_hint: "演示模式 · 点击或空格切换",
+    demo_start: "演示模式：点击/空格切换状态，自动轮播中",
+    demo_exit_disabled: "演示模式：退出已禁用",
+  },
+  en: {
+    title: "Self-Checkout Scale",
+    step_place: "Place", step_recognize: "Identify", step_confirm: "Confirm",
+    exit_aria: "Exit",
+    video_alt: "Live view",
+    camera_hint: "Place the item inside the box",
+    camera_hint_demo: "Demo mode · live view placeholder",
+    idle_lead: "Place item on the scale",
+    idle_sub: "It will be recognized automatically",
+    idle_weighing_sub: "Hold steady, reading…",
+    recognizing_lead: "Recognizing…",
+    conf_prefix: "Confidence ", conf_init: "Confidence —",
+    label_weight: "Weight", label_unit: "Unit price", label_total: "Total",
+    btn_confirm: "Confirm", btn_cancel: "Cancel",
+    link_redo: "Wrong? Choose manually ›",
+    low_warn: "⚠ Recognition may be off — please confirm the item",
+    low_maybe: "Could be:",
+    low_browse_all: "Browse all items",
+    selector_title: "Select an item",
+    search_ph: "Search name…",
+    btn_back: "Back",
+    grid_empty: "No matching items",
+    cat_all: "All", cat_other: "Other",
+    pay_scan: "Scan to pay",
+    pay_sub: "Scan with WeChat or Alipay to complete payment",
+    pay_qr_alt: "Payment QR code",
+    receipt_title: "Order summary",
+    order_no: "Order",
+    btn_finish: "Done",
+    item_fallback: "Item",
+    exit_title: "Exit the app?",
+    exit_sub: "This will close the self-checkout program",
+    exiting: "Exiting…",
+    btn_no: "No", btn_yes_exit: "Yes, exit",
+    conn_lost: "Disconnected — reconnecting…",
+    error_prefix: "Recognition error: ",
+    demo_hint: "Demo mode · tap or space to switch",
+    demo_start: "Demo: tap/space to switch states, auto-cycling",
+    demo_exit_disabled: "Demo mode: exit disabled",
+  },
+};
+let lang = "zh";
+function t(key) {
+  const table = I18N[lang] || I18N.zh;
+  return key in table ? table[key] : (I18N.zh[key] ?? key);
+}
+
+/* 套用所有静态文案：文本 / 输入占位 / 图片 alt / aria-label */
+function applyStaticI18n() {
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+  document.querySelectorAll("[data-i18n-alt]").forEach((el) => {
+    el.alt = t(el.dataset.i18nAlt);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach((el) => {
+    el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  });
+}
+function applyDemoHint() { if (DEMO) els.cameraHint.textContent = t("camera_hint_demo"); }
+
+/* 切换语言：更新开关高亮 + 全站重渲染（含动态面板） */
+function setLang(next) {
+  if (next !== "zh" && next !== "en") return;
+  lang = next;
+  document.querySelectorAll(".lang-opt").forEach((b) =>
+    b.classList.toggle("active", b.dataset.lang === next));
+  relocalize();
+}
+function relocalize() {
+  applyStaticI18n();
+  document.title = t("title");
+  document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  // 重渲染当前已有数据的动态面板（静态套用会把它们覆盖成初始占位）
+  if (last.review) renderReview(last.review);
+  if (last.low) renderLowConf(last.low);
+  if (last.pay) renderPayment(last.pay, last.payOrder);
+  if (products.length) { buildCats(); renderGrid(); }
+  applyDemoHint();
+}
+
 const stage = document.getElementById("stage");
 const els = {
   video: document.getElementById("video"),
@@ -35,7 +166,12 @@ const els = {
 let ws = null;
 let returnState = "review";   // 选择器返回的目标状态
 let products = [];            // 品类选择器数据
-let activeCat = "全部";
+// 分类用稳定 key（英文前缀派生），与显示名解耦，便于语言热切换时保持选中态
+const CAT_ALL = "__all__";
+const CAT_OTHER = "__other__";
+let activeCat = CAT_ALL;
+// 各动态面板最近一次数据，供语言切换后重渲染
+let last = { review: null, low: null, pay: null, payOrder: null };
 
 /* ---------------- 状态机 / 进度条 ---------------- */
 function setState(name) {
@@ -73,7 +209,7 @@ function fmtConf(c) { return Math.round((c || 0) * 100) + "%"; }
 
 function renderReview(d) {
   els.reviewName.textContent = d.name_cn || d.label || "—";
-  els.reviewConf.textContent = "置信度 " + fmtConf(d.confidence);
+  els.reviewConf.textContent = t("conf_prefix") + fmtConf(d.confidence);
   els.reviewWeight.textContent = (d.weight_kg ?? 0).toFixed(3);
   els.reviewUnit.textContent = d.price_per_kg != null ? d.price_per_kg.toFixed(2) : "—";
   els.reviewTotal.textContent = d.total_price != null ? d.total_price.toFixed(2) : "—";
@@ -93,7 +229,7 @@ function renderLowConf(d) {
 }
 
 function renderPayment(d, orderId) {
-  els.payName.textContent = d.name_cn || d.label || "商品";
+  els.payName.textContent = d.name_cn || d.label || t("item_fallback");
   els.payTotal.textContent = "¥" + (d.total_price != null ? d.total_price.toFixed(2) : "—");
   els.payWeight.textContent = (d.weight_kg ?? 0).toFixed(3);
   els.payUnit.textContent = d.price_per_kg != null ? d.price_per_kg.toFixed(2) : "—";
@@ -118,21 +254,27 @@ async function loadProducts() {
   renderGrid();
 }
 
-function catOf(p) { return (p.label || "").split("_")[0] || "其他"; }
+function catKeyOf(p) { return (p.label || "").split("_")[0] || CAT_OTHER; }
+function catLabel(key) {
+  if (key === CAT_ALL) return t("cat_all");
+  if (key === CAT_OTHER) return t("cat_other");
+  return key;  // 真实分类（英文前缀，语言无关）
+}
 
 function buildCats() {
-  const keys = Array.from(new Set(products.map(catOf))).sort();
-  const tabs = ["全部", ...keys];
-  activeCat = "全部";
+  const keys = Array.from(new Set(products.map(catKeyOf))).sort();
+  const tabs = [CAT_ALL, ...keys];
+  if (!tabs.includes(activeCat)) activeCat = CAT_ALL;  // 语言切换重建时保持选中态
   els.cats.innerHTML = "";
   tabs.forEach((k) => {
     const div = document.createElement("div");
     div.className = "cat" + (k === activeCat ? " active" : "");
-    div.textContent = k;
+    div.dataset.cat = k;
+    div.textContent = catLabel(k);
     div.addEventListener("click", () => {
       activeCat = k;
       els.cats.querySelectorAll(".cat").forEach((c) =>
-        c.classList.toggle("active", c.textContent === k));
+        c.classList.toggle("active", c.dataset.cat === k));
       renderGrid();
     });
     els.cats.appendChild(div);
@@ -142,14 +284,14 @@ function buildCats() {
 function renderGrid() {
   const q = (els.search.value || "").trim().toLowerCase();
   const list = products.filter((p) => {
-    const catOk = activeCat === "全部" || catOf(p) === activeCat;
+    const catOk = activeCat === CAT_ALL || catKeyOf(p) === activeCat;
     const qOk = !q || (p.name_cn || "").toLowerCase().includes(q) ||
       (p.label || "").toLowerCase().includes(q);
     return catOk && qOk;
   });
   els.grid.innerHTML = "";
   if (list.length === 0) {
-    els.grid.innerHTML = '<div class="grid-empty">没有匹配的商品</div>';
+    els.grid.innerHTML = `<div class="grid-empty">${t("grid_empty")}</div>`;
     return;
   }
   list.forEach((p) => {
@@ -177,12 +319,20 @@ function dispatch(msg) {
     }
     case "recognizing": setState("recognizing"); break;
     case "transaction_ready":
-      if (msg.data && msg.data.low_confidence) { renderLowConf(msg.data); setState("lowconf"); }
-      else { renderReview(msg.data); setState("review"); }
+      if (msg.data && msg.data.low_confidence) {
+        last.low = msg.data; last.review = null;
+        renderLowConf(msg.data); setState("lowconf");
+      } else {
+        last.review = msg.data; last.low = null;
+        renderReview(msg.data); setState("review");
+      }
       break;
-    case "confirmed": renderPayment(msg.data || {}, msg.transaction_id); setState("payment"); break;
-    case "cleared": setState("idle"); break;
-    case "error": showToast("识别异常：" + (msg.text || "")); break;
+    case "confirmed":
+      last.pay = msg.data || {}; last.payOrder = msg.transaction_id;
+      renderPayment(last.pay, last.payOrder); setState("payment");
+      break;
+    case "cleared": last.review = last.low = last.pay = null; setState("idle"); break;
+    case "error": showToast(t("error_prefix") + (msg.text || "")); break;
   }
 }
 
@@ -208,7 +358,7 @@ function showToast(text) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     els.connToast.hidden = true;
-    els.connToast.textContent = "连接已断开，重连中…";
+    els.connToast.textContent = t("conn_lost");
   }, 3000);
 }
 
@@ -216,7 +366,7 @@ function showToast(text) {
 function bindVideo() {
   if (DEMO) {
     els.video.style.display = "none";
-    els.cameraHint.textContent = "演示模式 · 实时画面占位";
+    applyDemoHint();
     return;
   }
   els.video.onerror = () => {
@@ -230,7 +380,8 @@ stage.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const action = btn.dataset.action;
-  if (action === "confirm") send({ type: "confirm" });
+  if (action === "lang") setLang(btn.dataset.lang);
+  else if (action === "confirm") send({ type: "confirm" });
   else if (action === "clear") send({ type: "clear" });
   else if (action === "open-selector") openSelector();
   else if (action === "close-selector") setState(returnState);
@@ -242,9 +393,9 @@ stage.addEventListener("click", (e) => {
 
 /* 退出：确认后通知后端结束 kiosk（演示模式禁用） */
 function doExit() {
-  if (DEMO) { els.exitModal.hidden = true; showToast("演示模式：退出已禁用"); return; }
+  if (DEMO) { els.exitModal.hidden = true; showToast(t("demo_exit_disabled")); return; }
   const title = els.exitModal.querySelector(".modal-title");
-  if (title) title.textContent = "正在退出…";
+  if (title) title.textContent = t("exiting");
   fetch("/api/exit", { method: "POST" }).catch(() => {});
 }
 els.search.addEventListener("input", renderGrid);
@@ -278,6 +429,8 @@ function enableDragScroll(el) {
 
 /* ---------------- 启动 ---------------- */
 function init() {
+  applyStaticI18n();              // 默认 zh，与 HTML 一致；统一从文案表取，便于将来改默认语言
+  document.title = t("title");
   bindVideo();
   enableDragScroll(els.cats);
   enableDragScroll(els.grid);
@@ -323,10 +476,10 @@ const DEMO_STEPS = [
 ];
 let demoIdx = 0;
 function startDemo() {
-  showToast("演示模式：点击/空格切换状态，自动轮播中");
+  showToast(t("demo_start"));
   setTimeout(() => (els.connToast.hidden = true), 100); // 不长期遮挡
   els.connToast.hidden = false;
-  els.connToast.textContent = "演示模式 · 点击或空格切换";
+  els.connToast.textContent = t("demo_hint");
   demoIdx = 0; DEMO_STEPS[0]();
   const advance = () => { demoIdx = (demoIdx + 1) % DEMO_STEPS.length; DEMO_STEPS[demoIdx](); };
   document.addEventListener("click", (e) => { if (!e.target.closest("[data-action], .cand, .cell, .cat")) advance(); });

@@ -15,30 +15,38 @@
     <header class="progress" id="progress">
       <div class="steps">
         <div class="step" data-step="place">
-          <span class="dot">1</span><span class="step-label">放置</span>
+          <span class="dot">1</span><span class="step-label" data-i18n="step_place">放置</span>
         </div>
         <div class="bar"></div>
         <div class="step" data-step="recognize">
-          <span class="dot">2</span><span class="step-label">识别</span>
+          <span class="dot">2</span><span class="step-label" data-i18n="step_recognize">识别</span>
         </div>
         <div class="bar"></div>
         <div class="step" data-step="confirm">
-          <span class="dot">3</span><span class="step-label">确认</span>
+          <span class="dot">3</span><span class="step-label" data-i18n="step_confirm">确认</span>
         </div>
       </div>
-      <button class="exit-btn" data-action="open-exit" aria-label="退出">✕</button>
+      <div class="header-right">
+        <!-- 中/EN 语言切换：默认「中」，点击热切换全站文案。仅在放置-识别-确认主界面可见
+             （选择器/支付遮罩 z-index:10 会盖住整条顶栏，连同 ✕，故支付页不出现该开关） -->
+        <div class="lang-toggle" role="group" aria-label="语言 / Language">
+          <button class="lang-opt active" data-action="lang" data-lang="zh">中</button>
+          <button class="lang-opt" data-action="lang" data-lang="en">EN</button>
+        </div>
+        <button class="exit-btn" data-action="open-exit" data-i18n-aria="exit_aria" aria-label="退出">✕</button>
+      </div>
     </header>
 
     <!-- 主体：左实时画面 + 右信息栏 -->
     <main class="main">
       <section class="camera">
-        <img id="video" class="video" alt="实时画面" />
+        <img id="video" class="video" data-i18n-alt="video_alt" alt="实时画面" />
         <!-- 蓝色放置引导框（分类模型无真实 bbox，框为中心裁剪引导） -->
         <div class="guide-box">
           <span class="corner tl"></span><span class="corner tr"></span>
           <span class="corner bl"></span><span class="corner br"></span>
         </div>
-        <div class="camera-hint" id="cameraHint">请将商品放在框内</div>
+        <div class="camera-hint" id="cameraHint" data-i18n="camera_hint">请将商品放在框内</div>
       </section>
 
       <aside class="info">
@@ -47,20 +55,20 @@
           <!-- 未达触发阈值：突出引导文案 -->
           <div class="idle-prompt">
             <div class="big-icon">⚖️</div>
-            <div class="prompt-lead">请将商品放到秤上</div>
-            <div class="prompt-sub">放好后将自动识别</div>
+            <div class="prompt-lead" data-i18n="idle_lead">请将商品放到秤上</div>
+            <div class="prompt-sub" data-i18n="idle_sub">放好后将自动识别</div>
           </div>
           <!-- 已超过触发阈值：显示实时重量，等待放稳 -->
           <div class="idle-weighing">
             <div class="weight-big"><span id="idleWeight">0</span><small> g</small></div>
-            <div class="sub">请保持稳定，正在读数…</div>
+            <div class="sub" data-i18n="idle_weighing_sub">请保持稳定，正在读数…</div>
           </div>
         </div>
 
         <!-- ② 识别中 -->
         <div class="panel panel-recognizing">
           <div class="spinner"></div>
-          <div class="lead">正在识别…</div>
+          <div class="lead" data-i18n="recognizing_lead">正在识别…</div>
           <div class="weight-chip"><span id="recogWeight">0</span> g</div>
         </div>
 
@@ -68,32 +76,32 @@
         <div class="panel panel-review">
           <div class="name-row">
             <span class="name" id="reviewName">—</span>
-            <span class="conf-chip" id="reviewConf">置信度 —</span>
+            <span class="conf-chip" id="reviewConf" data-i18n="conf_init">置信度 —</span>
           </div>
           <div class="meta">
-            <div class="meta-item"><label>重量</label><b><span id="reviewWeight">—</span> kg</b></div>
-            <div class="meta-item"><label>单价</label><b>¥<span id="reviewUnit">—</span>/kg</b></div>
+            <div class="meta-item"><label data-i18n="label_weight">重量</label><b><span id="reviewWeight">—</span> kg</b></div>
+            <div class="meta-item"><label data-i18n="label_unit">单价</label><b>¥<span id="reviewUnit">—</span>/kg</b></div>
           </div>
           <div class="total">
-            <label>总价</label>
+            <label data-i18n="label_total">总价</label>
             <div class="total-value">¥<span id="reviewTotal">—</span></div>
           </div>
           <div class="actions">
-            <button class="btn btn-primary" data-action="confirm">确认</button>
-            <button class="btn btn-ghost" data-action="clear">取消</button>
+            <button class="btn btn-primary" data-action="confirm" data-i18n="btn_confirm">确认</button>
+            <button class="btn btn-ghost" data-action="clear" data-i18n="btn_cancel">取消</button>
           </div>
-          <button class="link-redo" data-action="open-selector">识别不对？手动选择 ›</button>
+          <button class="link-redo" data-action="open-selector" data-i18n="link_redo">识别不对？手动选择 ›</button>
         </div>
 
         <!-- ④ 低置信兜底 -->
         <div class="panel panel-lowconf">
-          <div class="warn-banner">⚠ 识别可能不准，请确认品类</div>
+          <div class="warn-banner" data-i18n="low_warn">⚠ 识别可能不准，请确认品类</div>
           <div class="weight-chip"><span id="lowWeight">0</span> g</div>
-          <div class="candidates-title">可能是：</div>
+          <div class="candidates-title" data-i18n="low_maybe">可能是：</div>
           <div class="candidates" id="candidates"><!-- JS 注入 --></div>
           <div class="actions">
-            <button class="btn btn-warn" data-action="open-selector">查看全部品类</button>
-            <button class="btn btn-ghost" data-action="clear">取消</button>
+            <button class="btn btn-warn" data-action="open-selector" data-i18n="low_browse_all">查看全部品类</button>
+            <button class="btn btn-ghost" data-action="clear" data-i18n="btn_cancel">取消</button>
           </div>
         </div>
       </aside>
@@ -102,9 +110,9 @@
     <!-- ⑤ 全屏品类选择器 -->
     <div class="overlay overlay-selector" id="selector">
       <div class="selector-head">
-        <span class="selector-title">选择商品品类</span>
-        <input class="search" id="search" type="search" placeholder="搜索名称…" />
-        <button class="btn btn-ghost btn-sm" data-action="close-selector">返回</button>
+        <span class="selector-title" data-i18n="selector_title">选择商品品类</span>
+        <input class="search" id="search" type="search" data-i18n-ph="search_ph" placeholder="搜索名称…" />
+        <button class="btn btn-ghost btn-sm" data-action="close-selector" data-i18n="btn_back">返回</button>
       </div>
       <div class="selector-body">
         <nav class="cats" id="cats"><!-- JS 注入分类 Tab --></nav>
@@ -117,9 +125,9 @@
       <!-- 左：扫码支付（占位二维码，假逻辑指向演示链接，非真实支付） -->
       <div class="pay-left">
         <div class="qr-card">
-          <div class="qr"><img class="qr-img" src="/static/payqr.svg" alt="支付二维码" /></div>
-          <div class="qr-title">扫码支付</div>
-          <div class="qr-sub">请使用微信或支付宝扫码完成支付</div>
+          <div class="qr"><img class="qr-img" src="/static/payqr.svg" data-i18n-alt="pay_qr_alt" alt="支付二维码" /></div>
+          <div class="qr-title" data-i18n="pay_scan">扫码支付</div>
+          <div class="qr-sub" data-i18n="pay_sub">请使用微信或支付宝扫码完成支付</div>
         </div>
       </div>
       <!-- 右：订单确认 + 完成 -->
@@ -134,7 +142,7 @@
                 <path d="M8.4 13l2.2 2.2L15 11"></path>
               </svg>
             </span>
-            <span class="receipt-title">订单确认</span>
+            <span class="receipt-title" data-i18n="receipt_title">订单确认</span>
           </div>
           <div class="receipt-row">
             <span class="receipt-name" id="payName">—</span>
@@ -143,27 +151,27 @@
           <div class="receipt-divider"></div>
           <div class="receipt-meta">
             <span><span id="payWeight">—</span> kg × ¥<span id="payUnit">—</span>/kg</span>
-            <span class="order-no">单号 #<span id="payOrder">—</span></span>
+            <span class="order-no"><span data-i18n="order_no">单号</span> #<span id="payOrder">—</span></span>
           </div>
         </div>
-        <button class="btn btn-primary btn-wide pay-finish" data-action="finish">完成</button>
+        <button class="btn btn-primary btn-wide pay-finish" data-action="finish" data-i18n="btn_finish">完成</button>
       </div>
     </div>
 
     <!-- 退出确认弹窗 -->
     <div class="modal" id="exitModal" hidden>
       <div class="modal-card">
-        <div class="modal-title">确定要退出吗？</div>
-        <div class="modal-sub">退出后将结束当前自助称重程序</div>
+        <div class="modal-title" data-i18n="exit_title">确定要退出吗？</div>
+        <div class="modal-sub" data-i18n="exit_sub">退出后将结束当前自助称重程序</div>
         <div class="modal-actions">
-          <button class="btn btn-ghost" data-action="exit-cancel">否</button>
-          <button class="btn btn-danger" data-action="exit-confirm">是，退出</button>
+          <button class="btn btn-ghost" data-action="exit-cancel" data-i18n="btn_no">否</button>
+          <button class="btn btn-danger" data-action="exit-confirm" data-i18n="btn_yes_exit">是，退出</button>
         </div>
       </div>
     </div>
 
     <!-- 连接状态提示 -->
-    <div class="conn-toast" id="connToast" hidden>连接已断开，重连中…</div>
+    <div class="conn-toast" id="connToast" data-i18n="conn_lost" hidden>连接已断开，重连中…</div>
   </div>
 
   <script src="/static/app.js"></script>
