@@ -35,6 +35,7 @@ python scripts/run_web.py # 直接起 Web kiosk（等价于 frontend=web）
 | `GET /` | kiosk 页面（`app/web/static/index.html`） |
 | `GET /healthz` | 探活 |
 | `GET /api/ui/products` | 品类选择器全量商品 `[{label,name_cn,price_per_kg}]` |
+| `POST /api/exit` | 前端「退出」确认后调用，置位关停信号→ `launcher` 终止 Chromium 并结束 kiosk 进程，返回 `{"status":"exiting"}` |
 | `GET /stream/video` | MJPEG 视频流（`multipart/x-mixed-replace`） |
 | `WS /ws` | 实时状态双工通道 |
 
