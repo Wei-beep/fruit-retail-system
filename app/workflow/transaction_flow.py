@@ -13,6 +13,10 @@ from app.weighing.stability import StabilityDetector
 
 
 class TransactionFlow:
+    # wait_for_release 的兜底超时（秒）：超过仍未检测到取走则放弃等待、照常进入称重，
+    # 避免零点漂移/商品遗留导致 kiosk 永久卡在「请放置」。
+    _RELEASE_TIMEOUT_SECONDS = 10.0
+
     def __init__(
         self,
         weight_sensor: WeightSensor,
@@ -71,14 +75,21 @@ class TransactionFlow:
             time.sleep(self.poll_interval_seconds)
 
     def wait_for_release(self) -> None:
-        """阻塞至秤面重量回落到触发阈值以下（上一件商品被取走）。
+        """阻塞至秤面重量回落到触发阈值以下（上一件商品被取走），或达到兜底超时。
 
         期间不回调 on_reading（前端停留在「请放置」引导，不显示残留克重）。
         触发阈值为 0 时立即返回（无门槛）。
+
+        兜底超时（_RELEASE_TIMEOUT_SECONDS）：若超时仍未检测到取走（如零点漂移使空秤
+        读数恒高于阈值，或商品被遗留），则放弃等待、照常进入称重，由后续量程/稳定逻辑兜底，
+        避免 kiosk 永久卡在「请放置」且无任何提示。
         """
         if self.trigger_threshold_kg <= 0:
             return
+        deadline = time.monotonic() + self._RELEASE_TIMEOUT_SECONDS
         while self.weight_sensor.read_weight() >= self.trigger_threshold_kg:
+            if time.monotonic() >= deadline:
+                return
             time.sleep(self.poll_interval_seconds)
 
     def prepare_transaction(
