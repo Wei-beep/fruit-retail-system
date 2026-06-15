@@ -113,3 +113,6 @@ class KioskSession:
     def stop(self) -> None:
         self._running = False
         self.controller.stop()
+        # 释放摄像头（停止其内部取帧线程并 release 设备）。先停控制器再关相机，
+        # 避免新一轮 prepare 启动；确定性释放优于依赖进程退出时的 atexit。
+        self.camera.close()

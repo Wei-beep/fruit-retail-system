@@ -171,6 +171,7 @@ class MainWindow:
         """
         self.controller.stop()
         self._monitor.stop()
+        self.camera.close()  # 停止取帧线程并释放摄像头设备
         self.root.destroy()
 
 
