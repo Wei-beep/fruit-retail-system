@@ -135,7 +135,7 @@ def main() -> None:
     print(f"\n   {'重量(kg)':>10} | {'原始值':>10} | {'拟合值':>10} | {'误差(g)':>10}")
     print("-" * 50)
     for w, r in points:
-        predicted = r / scale_factor  # 代入当前 scale_factor 反算重量
+        predicted = (r - raw_offset) / scale_factor  # 与 read_weight 一致：先减零点偏移再换算
         err_g = (w - predicted) * 1000
         print(f"   {w:>10.3f} | {r:>10.1f} | {predicted:>10.4f} | {err_g:>+9.1f}")
 
