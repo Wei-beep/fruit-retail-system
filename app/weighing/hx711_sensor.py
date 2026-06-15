@@ -64,13 +64,8 @@ class HX711Sensor(WeightSensor):
         cal = CalibrationService().get_calibration()
         self.offset = cal["offset"]
         self.scale_factor = cal["scale_factor"]
-
-        # 物理可信 raw 区间（≈[-0.5kg, 6kg]，量程上限仅 5kg 不会误杀真实商品）。
-        # 落在区间外的多为位错位坏值（如 ~-0.82kg），据此判废重读。
-        lo = self.offset + (-0.5) * self.scale_factor
-        hi = self.offset + 6.0 * self.scale_factor
-        self._raw_min = min(lo, hi)
-        self._raw_max = max(lo, hi)
+        # 注意：物理可信 raw 区间（见 _raw_in_plausible_range）按 self.offset/scale_factor
+        # 实时计算、不在此预存——否则校准更新参数后这里的旧区间不会刷新，会误判/误「保持」。
 
     # ------------------------------------------------------------------
     # GPIO 初始化（RPi.GPIO 不可用时优雅降级）
@@ -123,12 +118,27 @@ class HX711Sensor(WeightSensor):
     # ------------------------------------------------------------------
     # 底层 HX711 通信
     # ------------------------------------------------------------------
-    def _read_raw(self, retries: int = 5) -> int:
+    def _raw_in_plausible_range(self, value: int) -> bool:
+        """value 是否落在「按当前校准」的物理可信 raw 区间（≈[-0.5kg, 6kg]）。
+
+        量程上限仅 5kg，取 6kg 不会误杀真实商品；落区间外的多为位错位坏值（如 ~-0.82kg）。
+        按 self.offset/self.scale_factor 实时计算（不预存）：校准改参后立即生效，
+        杜绝旧实现「__init__ 预存、改参不刷新」导致校准后误判/误保持的问题。
+        """
+        lo = self.offset + (-0.5) * self.scale_factor
+        hi = self.offset + 6.0 * self.scale_factor
+        return min(lo, hi) <= value <= max(lo, hi)
+
+    def _read_raw(self, retries: int = 5, gate: bool = True) -> int:
         """读取一次有效原始值；检测到坏读则进入“沉降冷却·保持上次值”。
 
         坏读判据：脉冲段耗时超阈（被抢占致 SCK 滞留→掉电）、越界（位错位）、或全 0/全 1
         （DOUT 卡死）。打断后芯片有数百 ms 沉降期持续吐坏值且逐拍无法识别，故一旦检测到就
         进入冷却、期间返回上次有效值“保持”，盖住沉降期。无打断时即单次快读直接返回。
+
+        gate=False：跳过「越界」判据（脉冲超时 + 全 0/全 1 哨兵仍生效）。专供去皮/校准：
+        越界区间是按「已存校准」算的，而校准时这套参数尚不可信（默认/上次坏值），用它判废
+        属循环依赖，会误判真实读数。故校准路径关掉越界判据，只靠哨兵 + 超时 + 中位数兜底。
         """
         if time.monotonic() < self._settle_until and self._last_good_raw is not None:
             return self._last_good_raw
@@ -138,7 +148,7 @@ class HX711Sensor(WeightSensor):
             value = self._read_raw_once()
             last = value
             stalled = self._last_pulse_seconds > self._MAX_PULSE_SECONDS
-            out_of_range = not (self._raw_min <= value <= self._raw_max)
+            out_of_range = gate and not self._raw_in_plausible_range(value)
             if stalled or out_of_range or value in self._INVALID_RAW:
                 self._settle_until = time.monotonic() + self._SETTLE_SECONDS
                 if self._last_good_raw is not None:
@@ -212,21 +222,26 @@ class HX711Sensor(WeightSensor):
             GPIO.output(self.sck_pin, False)
         return value
 
-    def read_raw_median(self, samples: int = 10) -> float:
+    def read_raw_median(self, samples: int = 10, gate: bool = True) -> float:
         """连续读取 samples 次并返回中位数。
 
         中位数比均值更抗离群读数：即便混入个别非哨兵的异常值（_read_raw 只剔除
         全 0 / 全 1 哨兵值），也不会把结果带偏，对去皮和校准精度更稳。
+
+        gate 透传给 _read_raw：去皮/校准取 gate=False，跳过依赖「已存校准」的越界判据。
         """
-        readings = [self._read_raw() for _ in range(samples)]
+        readings = [self._read_raw(gate=gate) for _ in range(samples)]
         return statistics.median(readings)
 
     # ------------------------------------------------------------------
     # 去皮
     # ------------------------------------------------------------------
     def tare(self, samples: int = 10) -> float:
-        """空载调零：读取 samples 次原始值取中位数，保存为 offset。"""
-        raw = self.read_raw_median(samples)
+        """空载调零：读取 samples 次原始值取中位数，保存为 offset。
+
+        gate=False：去皮时尚无可信校准，不能用「按已存校准算的越界区间」判废真实读数。
+        """
+        raw = self.read_raw_median(samples, gate=False)
         self.offset = raw
         return raw
 

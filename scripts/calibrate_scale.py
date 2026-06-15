@@ -30,8 +30,12 @@ from app.weighing.hx711_sensor import HX711Sensor
 
 
 def _read_stable(sensor: HX711Sensor, samples: int = 5) -> float:
-    """连续读取 3 组中位数再取平均，提高稳定性。"""
-    values = [sensor.read_raw_median(samples) for _ in range(3)]
+    """连续读取 3 组中位数再取平均，提高稳定性。
+
+    gate=False：校准过程中数据库里的校准参数尚不可信，必须跳过依赖它的「越界判废」，
+    否则真实承重读数可能被误判而拿不到正确数据点。
+    """
+    values = [sensor.read_raw_median(samples, gate=False) for _ in range(3)]
     return sum(values) / len(values)
 
 
