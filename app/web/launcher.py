@@ -103,6 +103,8 @@ def run_web() -> None:
         "--disable-component-update",
         "--check-for-update-interval=31536000",
         "--autoplay-policy=no-user-gesture-required",
+        # 冷启动时不去解锁 GNOME 登录密钥环（kiosk 无需存网站密码），避免弹密码框
+        "--password-store=basic",
         "--user-data-dir=/tmp/fruit-kiosk-chromium",
         f"--app={base_url}",
     ]
