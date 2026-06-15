@@ -14,7 +14,7 @@ import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -46,6 +46,19 @@ def create_web_app(config: dict | None = None) -> FastAPI:
             session.stop()
 
     app = FastAPI(title="Fruit Retail Kiosk", lifespan=lifespan)
+
+    @app.middleware("http")
+    async def _no_cache_ui(request: Request, call_next):
+        """单机本地 kiosk：UI 资源禁用浏览器缓存，确保改版/冷启动后总是加载最新前端。
+        否则 Chromium（--user-data-dir 持久）会用磁盘缓存里的旧 index.html/app.js，
+        导致「改了页面看不到」。仅作用于首页与 /static，不影响 /stream/video、/ws。"""
+        response = await call_next(request)
+        path = request.url.path
+        if path == "/" or path.startswith("/static"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        return response
 
     @app.get("/healthz")
     def healthz() -> dict:
