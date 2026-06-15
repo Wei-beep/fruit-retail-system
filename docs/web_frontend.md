@@ -72,6 +72,11 @@ python scripts/run_web.py # 直接起 Web kiosk（等价于 frontend=web）
 低置信时由用户点候选或在品类选择器中手动选品，后端按当前重量重新计价
 （`GUIController.select_label`）。
 
+点「完成」后回到空闲引导，但**不会立刻**开始下一轮称重：后端先等秤面重量回落到
+触发阈值以下（已购商品被取走）再重新进入称重→识别流程，避免商品仍在秤上时被重复
+识别（`TransactionFlow.wait_for_release`）。注：mock 称重恒有载重，不会自动重新进入
+下一轮，属预期（mock 模拟「秤上一直有物」）。
+
 ## 前端开发 / 视觉走查
 
 前端为原生 HTML/CSS/JS，无构建步骤，静态资源全部本地化（离线友好）。

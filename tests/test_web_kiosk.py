@@ -108,6 +108,43 @@ def test_trigger_threshold_gates_stability_and_reports_flag() -> None:
     assert stable == 0.3
 
 
+class _ReleaseThenPlaceSensor(WeightSensor):
+    """上一件商品仍在秤上(>阈值)→被取走(<阈值)→放上新商品并稳定。"""
+
+    def __init__(self) -> None:
+        self._vals = iter([0.30, 0.30, 0.30, 0.005] + [0.25] * 10)
+
+    def read_weight(self) -> float:
+        try:
+            return next(self._vals)
+        except StopIteration:
+            return 0.25
+
+
+def test_wait_for_release_then_stabilize() -> None:
+    """wait_for_release_first：先等秤面清空再称重，已购商品的残留读数不参与稳定。"""
+    initialize_database()
+    flow = TransactionFlow(
+        weight_sensor=_ReleaseThenPlaceSensor(),
+        stability_detector=StabilityDetector(window_size=5, threshold=0.005),
+        camera=MockCamera("data/images/test", "data/images/captured"),
+        detector=MockFruitVegetableDetector(),
+        price_service=PriceService(),
+        transaction_service=TransactionService(),
+        trigger_threshold_kg=0.02,
+        poll_interval_seconds=0.0,
+    )
+    readings: list[tuple[float, bool, bool]] = []
+    prepared = flow.prepare_transaction(
+        include_candidates=True,
+        on_reading=lambda w, s, t: readings.append((w, s, t)),
+        wait_for_release_first=True,
+    )
+    # 释放期(0.30)读数既不回调也不参与稳定；稳定值来自取走后放上的新商品 0.25
+    assert prepared["weight_kg"] == 0.25
+    assert readings and all(w <= 0.25 for (w, _s, _t) in readings)
+
+
 def test_select_label_recomputes_total() -> None:
     initialize_database()
     events: list[dict] = []

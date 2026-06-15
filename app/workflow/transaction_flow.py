@@ -68,10 +68,22 @@ class TransactionFlow:
                 return round(self.stability_detector.get_stable_value(), 3)
             time.sleep(self.poll_interval_seconds)
 
+    def wait_for_release(self) -> None:
+        """阻塞至秤面重量回落到触发阈值以下（上一件商品被取走）。
+
+        期间不回调 on_reading（前端停留在「请放置」引导，不显示残留克重）。
+        触发阈值为 0 时立即返回（无门槛）。
+        """
+        if self.trigger_threshold_kg <= 0:
+            return
+        while self.weight_sensor.read_weight() >= self.trigger_threshold_kg:
+            time.sleep(self.poll_interval_seconds)
+
     def prepare_transaction(
         self,
         include_candidates: bool = False,
         on_reading: Callable[[float, bool, bool], None] | None = None,
+        wait_for_release_first: bool = False,
     ) -> dict:
         """生成待确认交易。
 
@@ -79,7 +91,12 @@ class TransactionFlow:
         识别为 unknown/未登记商品时由 PriceService 抛错向上传递。
         include_candidates=True（Web 路径）：返回值附带识别 top-3 候选与
         low_confidence 标志；低置信/未登记商品不报错，价格字段置空，等用户手动选品。
+
+        wait_for_release_first=True（Web 完成上一笔交易后）：先等秤面清空（重量低于
+        触发阈值）再开始称重，避免已购商品仍在秤上时立刻触发下一轮识别。
         """
+        if wait_for_release_first:
+            self.wait_for_release()
         weight_kg = self.wait_for_stable_weight(on_reading=on_reading)
 
         # 内存直传：从摄像头拿到 ndarray 后直接喂给模型
