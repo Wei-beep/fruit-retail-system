@@ -36,7 +36,9 @@ class TransactionFlow:
         self.max_valid_weight_kg = max_valid_weight_kg
         # 触发阈值：秤上物重超过此值才算「有物品」，进入累积稳定窗口的称重流程。
         # 低于阈值（含轻微触碰回落）视为空秤，重置窗口 → 不会稳定 → 不触发识别。
-        # 默认 0.0 表示不设门槛，与原实现完全一致（保留 Tk 与既有测试行为）。
+        # 默认 0.0=不设门槛（既有测试直接构造 TransactionFlow 时即此值，保持原行为）。
+        # 注意：Web 与 Tk 都经 create_transaction_flow 读 config 的 trigger_threshold_kg
+        # （默认 0.02），故两套前端实际都启用该门槛，起触下限为 20g。
         self.trigger_threshold_kg = trigger_threshold_kg
         self.poll_interval_seconds = poll_interval_seconds
 
