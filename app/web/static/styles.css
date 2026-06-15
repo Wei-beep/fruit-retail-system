@@ -129,12 +129,20 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .stage[data-state="review"]      .panel-review      { display: flex; }
 .stage[data-state="lowconf"]     .panel-lowconf     { display: flex; }
 
-/* ① 空闲 */
+/* ① 空闲：未触发=引导（无克重），触发后=实时克重；由 stage[data-triggered] 切换 */
 .panel-idle { align-items: center; justify-content: center; text-align: center; }
-.big-icon { font-size: 56px; margin-bottom: 6px; }
+.idle-prompt, .idle-weighing { flex-direction: column; align-items: center; justify-content: center; }
+.idle-prompt   { display: flex; }
+.idle-weighing { display: none; }
+.stage[data-triggered="1"] .panel-idle .idle-prompt   { display: none; }
+.stage[data-triggered="1"] .panel-idle .idle-weighing { display: flex; }
+
+.big-icon { font-size: 64px; margin-bottom: 10px; }
+.prompt-lead { font-size: 34px; font-weight: 800; color: var(--text); line-height: 1.25; }
+.prompt-sub { margin-top: 14px; color: var(--accent); font-size: 20px; font-weight: 600; }
 .lead { font-size: 24px; font-weight: 700; color: var(--text); }
 .panel-idle .sub { margin-top: 10px; color: var(--text-muted); font-size: 15px; }
-.weight-big { margin-top: 14px; font-size: 60px; font-weight: 800; color: var(--accent); line-height: 1; }
+.weight-big { font-size: 60px; font-weight: 800; color: var(--accent); line-height: 1; }
 .weight-big small { font-size: 22px; font-weight: 600; color: var(--text-muted); }
 
 /* ② 识别中 */

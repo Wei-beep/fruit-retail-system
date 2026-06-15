@@ -42,12 +42,19 @@
       </section>
 
       <aside class="info">
-        <!-- ① 空闲：请放置 -->
+        <!-- ① 空闲：未触发=醒目放置引导（不显示克重）；触发后=实时克重 -->
         <div class="panel panel-idle">
-          <div class="big-icon">⚖️</div>
-          <div class="lead">请将商品放到秤上</div>
-          <div class="weight-big"><span id="idleWeight">0</span><small> g</small></div>
-          <div class="sub">放好后将自动识别</div>
+          <!-- 未达触发阈值：突出引导文案 -->
+          <div class="idle-prompt">
+            <div class="big-icon">⚖️</div>
+            <div class="prompt-lead">请将商品放到秤上</div>
+            <div class="prompt-sub">放好后将自动识别</div>
+          </div>
+          <!-- 已超过触发阈值：显示实时重量，等待放稳 -->
+          <div class="idle-weighing">
+            <div class="weight-big"><span id="idleWeight">0</span><small> g</small></div>
+            <div class="sub">请保持稳定，正在读数…</div>
+          </div>
         </div>
 
         <!-- ② 识别中 -->

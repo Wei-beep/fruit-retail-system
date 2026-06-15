@@ -44,7 +44,7 @@ python scripts/run_web.py # 直接起 Web kiosk（等价于 frontend=web）
 
 | type | 字段 | 含义 |
 | --- | --- | --- |
-| `weight` | `weight_g`(int,已舍小数), `stable`(bool) | 实时重量 |
+| `weight` | `weight_g`(int,已舍小数), `stable`(bool), `triggered`(bool) | 实时重量；`triggered` 表示是否超过触发阈值(`weighing.trigger_threshold_kg`，默认 20g)。空闲态 `triggered=false` 时前端只显示「请放置」引导、不显示克重，超过阈值后才显示实时重量 |
 | `recognizing` | — | 重量稳定、识别中 |
 | `transaction_ready` | `data` | 待确认（`low_confidence` 区分正常/低置信） |
 | `confirmed` | `transaction_id`, `data` | 已确认，进入支付引导 |
@@ -64,7 +64,8 @@ python scripts/run_web.py # 直接起 Web kiosk（等价于 frontend=web）
 
 ## 界面状态
 
-①空闲请放置 ②识别中 ③待确认（核心）④低置信兜底（橙色警示 + top-3 候选 + 手动选择）
+①空闲请放置（未触发只显示醒目引导文案，秤上物重超过触发阈值后才显示实时克重）
+②识别中 ③待确认（核心）④低置信兜底（橙色警示 + top-3 候选 + 手动选择）
 ⑤全屏品类选择器（分类 Tab〔由 `label` 英文前缀派生〕+ 4 列网格 + 搜索）
 ⑥扫码支付引导（订单小票 + 微信/支付宝二维码占位，"完成"→ 回到空闲）。
 

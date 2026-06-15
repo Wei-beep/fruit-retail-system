@@ -14,7 +14,7 @@ class GUIController:
         on_transaction_ready: Callable[[dict], None],
         on_error: Callable[[str], None],
         on_cleared: Callable[[], None],
-        on_reading: Callable[[float, bool], None] | None = None,
+        on_reading: Callable[[float, bool, bool], None] | None = None,
         include_candidates: bool = False,
         auto_restart_after_confirm: bool = True,
     ) -> None:

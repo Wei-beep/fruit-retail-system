@@ -13,6 +13,7 @@ from app.pricing.price_service import PriceService
 from app.pricing.transaction_service import TransactionService
 from app.vision.mock_detector import MockFruitVegetableDetector
 from app.vision.yolo_interface import FruitVegetableDetector
+from app.weighing.hx711_interface import WeightSensor
 from app.weighing.mock_sensor import MockWeightSensor
 from app.weighing.stability import StabilityDetector
 from app.web.server import create_web_app
@@ -65,12 +66,46 @@ def test_prepare_with_candidates_low_confidence_does_not_raise() -> None:
 
 def test_on_reading_callback_invoked() -> None:
     initialize_database()
-    readings: list[tuple[float, bool]] = []
+    readings: list[tuple[float, bool, bool]] = []
     _make_flow().prepare_transaction(
-        include_candidates=True, on_reading=lambda w, s: readings.append((w, s))
+        include_candidates=True, on_reading=lambda w, s, t: readings.append((w, s, t))
     )
     assert len(readings) > 0
     assert readings[-1][1] is True  # 最后一次为稳定
+
+
+class _RampWeightSensor(WeightSensor):
+    """先给两次低于触发阈值的读数，再持续给同一稳定重量。"""
+
+    def __init__(self) -> None:
+        self._vals = iter([0.005, 0.008] + [0.30] * 11)
+
+    def read_weight(self) -> float:
+        return next(self._vals)
+
+
+def test_trigger_threshold_gates_stability_and_reports_flag() -> None:
+    """低于触发阈值的读数不累积稳定窗口，且回调 triggered=False。"""
+    flow = TransactionFlow(
+        weight_sensor=_RampWeightSensor(),
+        stability_detector=StabilityDetector(window_size=5, threshold=0.005),
+        camera=MockCamera("data/images/test", "data/images/captured"),
+        detector=MockFruitVegetableDetector(),
+        price_service=PriceService(),
+        transaction_service=TransactionService(),
+        trigger_threshold_kg=0.02,
+        poll_interval_seconds=0.0,
+    )
+    readings: list[tuple[float, bool, bool]] = []
+    stable = flow.wait_for_stable_weight(
+        on_reading=lambda w, s, t: readings.append((w, s, t))
+    )
+    # 前两次 5g/8g 低于 20g 阈值 → 未触发、不稳定
+    assert readings[0][2] is False and readings[0][1] is False
+    assert readings[1][2] is False
+    # 触发后累积满 5 个 300g 才稳定
+    assert readings[-1][2] is True and readings[-1][1] is True
+    assert stable == 0.3
 
 
 def test_select_label_recomputes_total() -> None:

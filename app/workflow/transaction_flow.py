@@ -23,6 +23,7 @@ class TransactionFlow:
         transaction_service: TransactionService,
         min_valid_weight_kg: float = 0.01,
         max_valid_weight_kg: float = 5.0,
+        trigger_threshold_kg: float = 0.0,
         poll_interval_seconds: float = 0.1,
     ) -> None:
         self.weight_sensor = weight_sensor
@@ -33,27 +34,36 @@ class TransactionFlow:
         self.transaction_service = transaction_service
         self.min_valid_weight_kg = min_valid_weight_kg
         self.max_valid_weight_kg = max_valid_weight_kg
+        # 触发阈值：秤上物重超过此值才算「有物品」，进入累积稳定窗口的称重流程。
+        # 低于阈值（含轻微触碰回落）视为空秤，重置窗口 → 不会稳定 → 不触发识别。
+        # 默认 0.0 表示不设门槛，与原实现完全一致（保留 Tk 与既有测试行为）。
+        self.trigger_threshold_kg = trigger_threshold_kg
         self.poll_interval_seconds = poll_interval_seconds
 
     def wait_for_stable_weight(
         self,
-        on_reading: Callable[[float, bool], None] | None = None,
+        on_reading: Callable[[float, bool, bool], None] | None = None,
     ) -> float:
         """等待重量稳定并返回稳定值（kg）。
 
-        on_reading（可选）：每读到一次重量就回调 (weight_kg, is_stable)，
-        供 Web 前端做实时重量推送。默认 None 时行为与原实现完全一致。
+        on_reading（可选）：每读到一次重量就回调 (weight_kg, is_stable, triggered)，
+        供 Web 前端做实时重量推送与「空秤/已触发」状态切换。triggered 表示当前读数
+        是否超过触发阈值。默认 None 时不回调，行为与原实现一致。
+
+        仅在「已触发且落在有效量程内」时累积稳定窗口；否则（空秤或轻碰回落）重置窗口，
+        从而保证只有真正放稳物品后才会稳定并进入后续识别。
         """
         self.stability_detector.reset()
         while True:
             weight = self.weight_sensor.read_weight()
             is_stable = False
-            if self.min_valid_weight_kg <= weight <= self.max_valid_weight_kg:
+            triggered = weight >= self.trigger_threshold_kg
+            if triggered and self.min_valid_weight_kg <= weight <= self.max_valid_weight_kg:
                 is_stable = self.stability_detector.add_reading(weight)
             else:
                 self.stability_detector.reset()
             if on_reading is not None:
-                on_reading(weight, is_stable)
+                on_reading(weight, is_stable, triggered)
             if is_stable:
                 return round(self.stability_detector.get_stable_value(), 3)
             time.sleep(self.poll_interval_seconds)
@@ -61,7 +71,7 @@ class TransactionFlow:
     def prepare_transaction(
         self,
         include_candidates: bool = False,
-        on_reading: Callable[[float, bool], None] | None = None,
+        on_reading: Callable[[float, bool, bool], None] | None = None,
     ) -> dict:
         """生成待确认交易。
 
