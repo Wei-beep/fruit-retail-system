@@ -25,6 +25,18 @@ Mock 模式保留作为开发/调试备选，可通过 `config.yaml` 切换回�
 - 自动等待称重、识别、计价并显示待确认交易；确认后写入 `transactions` 表，取消则丢弃当前待确认交易。
 - FastAPI 对外预留服务结构（`app/api`），`GET /health` 可用，价格/交易接口已实现。
 
+## 业务流程（Web kiosk）
+
+完整交易闭环由 `TransactionFlow` + `GUIController` 编排，前端按状态机渲染：
+
+1. **放置 / 空闲**：秤面重量低于触发阈值（`weighing.trigger_threshold_kg`，默认 20g）时视为空秤，界面只显示醒目的「请将商品放到秤上」引导、**不显示克重**；超过阈值后才切到实时克重显示。仅被碰一下（触发但未进入稳定）**不会**触发识别。
+2. **识别**：重量进入稳定窗口（`StabilityDetector`）后，抓拍一帧喂给 YOLO，进入「识别中」。整条链路里 YOLO 推理**只在此刻发生一次**，空闲 / 称重 / 支付阶段不占 CPU（`detector.predict()` 仅由 `prepare_transaction` 在稳定后调用）。
+3. **确认**：展示品名、置信度、重量、单价、总价。低置信 / 未登记商品不报错，给出 top-3 候选，并可进入全屏品类选择器手动选品（按当前重量重新计价）。点「确认」才写入 `transactions` 表，点「取消」丢弃当前待确认交易。
+4. **支付**：确认后进入扫码支付引导（二维码为占位图，非真实支付）。点「完成」回到空闲。
+5. **取走再开始**：点「完成」后**不会立刻**进入下一轮——后端先等秤面重量回落到触发阈值以下（上一件商品被取走）再开始下一轮称重识别，避免商品仍在秤上时被重复识别（带 10s 兜底超时，见 `TransactionFlow.wait_for_release`）。
+
+界面右上角有「中 / EN」分段开关，可**纯前端热切换**全站中英文（默认中文；仅在放置-识别-确认主界面显示，支付 / 品类选择器全屏遮罩时不显示）。
+
 ## 当前未实现/简化的部分
 
 - FastAPI 业务接口：`app/api/` 仅提供基础实现，鉴权、完整校验、分页和设备状态待补充
@@ -137,9 +149,14 @@ Mock 模式用于在没有真实硬件时开发 GUI、数据库、计价和交�
 - **返回格式**：
 
 ```python
-{"label": "apple_fuji", "confidence": 0.85, "zh_name": "红富士苹果"}
+{"label": "apple_fuji", "confidence": 0.85, "zh_name": "红富士苹果",
+ "candidates": [  # top-3，供前端低置信兜底时让顾客手动选择
+   {"label": "apple_fuji", "zh_name": "红富士苹果", "confidence": 0.85},
+   {"label": "apple_granny", "zh_name": "青苹果", "confidence": 0.10},
+   {"label": "pear", "zh_name": "梨", "confidence": 0.03}]}
 ```
 
+- **低置信处理**：置信度低于阈值（`vision.confidence_threshold`）时 `label` 返回 `unknown`，不报错；Web 前端据 `candidates` 让顾客手动选品，Tk 前端忽略 `candidates`
 - **输入兼容**：同时支持 `np.ndarray`（内存直传）和 `str`（文件路径）
 - **数据库同步**：`python scripts/sync_db.py` 将全部 65 类写入 `products` 表（默认单价 9.9 元/kg）
 - **独立测速**：`python scripts/speed_test.py` 批量测试推理耗时
