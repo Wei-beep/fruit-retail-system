@@ -59,4 +59,5 @@ def create_transaction_flow(config: dict) -> TransactionFlow:
         transaction_service=TransactionService(),
         min_valid_weight_kg=weighing_config["min_valid_weight_kg"],
         max_valid_weight_kg=weighing_config["max_valid_weight_kg"],
+        trigger_threshold_kg=weighing_config.get("trigger_threshold_kg", 0.0),
     )

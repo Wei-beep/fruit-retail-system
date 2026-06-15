@@ -20,6 +20,7 @@ weighing:
   stable_threshold_kg: 0.01
   min_valid_weight_kg: 0.01
   max_valid_weight_kg: 5.0
+  trigger_threshold_kg: 0.02  # 触发阈值：秤上物重超过此值才进入称重/识别流程并显示克重，低于则视为空秤
 
 vision:
   mode: real

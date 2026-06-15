@@ -14,7 +14,7 @@ class GUIController:
         on_transaction_ready: Callable[[dict], None],
         on_error: Callable[[str], None],
         on_cleared: Callable[[], None],
-        on_reading: Callable[[float, bool], None] | None = None,
+        on_reading: Callable[[float, bool, bool], None] | None = None,
         include_candidates: bool = False,
         auto_restart_after_confirm: bool = True,
     ) -> None:
@@ -30,6 +30,8 @@ class GUIController:
         self.current_transaction: dict | None = None
         self._running = False
         self._stopped = False
+        # 上一笔交易完成后置位：下一轮称重前先等秤面清空（取走已购商品）再开始
+        self._pending_release = False
 
     def stop(self) -> None:
         """退出时调用：阻止后续后台准备循环继续排队。"""
@@ -46,10 +48,13 @@ class GUIController:
         thread.start()
 
     def _prepare_in_background(self) -> None:
+        wait_for_release_first = self._pending_release
+        self._pending_release = False
         try:
             prepared = self.transaction_flow.prepare_transaction(
                 include_candidates=self.include_candidates,
                 on_reading=self.on_reading,
+                wait_for_release_first=wait_for_release_first,
             )
         except Exception as exc:
             self._running = False
@@ -102,6 +107,10 @@ class GUIController:
         if self.auto_restart_after_confirm:
             self.on_cleared()
             self.start_waiting()
+        else:
+            # Web：确认后展示支付引导；待用户点「完成」(clear) 才回到等待，
+            # 且需先等秤面清空（取走已购商品）再开始下一轮称重识别。
+            self._pending_release = True
         return transaction_id
 
     def clear_current(self) -> None:

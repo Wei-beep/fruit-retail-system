@@ -40,6 +40,8 @@ let activeCat = "全部";
 /* ---------------- 状态机 / 进度条 ---------------- */
 function setState(name) {
   stage.dataset.state = name;
+  // 回到空闲时复位触发标志，先显示「请放置」引导，待新一轮称重触发后再显示克重
+  if (name === "idle") stage.dataset.triggered = "0";
   if (name === "review" || name === "lowconf") returnState = name;
   setProgress(name);
 }
@@ -166,7 +168,10 @@ function dispatch(msg) {
   switch (msg.type) {
     case "weight": {
       const g = msg.weight_g ?? 0;
-      els.idleWeight.textContent = g;
+      const triggered = !!msg.triggered;
+      // 触发后才在空闲面板显示实时克重；未触发则停留在「请放置」引导
+      stage.dataset.triggered = triggered ? "1" : "0";
+      if (triggered) els.idleWeight.textContent = g;
       els.recogWeight.textContent = g;
       break;
     }
@@ -308,8 +313,8 @@ const DEMO_LOW = {
   ],
 };
 const DEMO_STEPS = [
-  () => dispatch({ type: "cleared" }) || dispatch({ type: "weight", weight_g: 0, stable: false }),
-  () => dispatch({ type: "weight", weight_g: 326, stable: false }),
+  () => dispatch({ type: "cleared" }) || dispatch({ type: "weight", weight_g: 8, stable: false, triggered: false }),
+  () => dispatch({ type: "weight", weight_g: 326, stable: false, triggered: true }),
   () => dispatch({ type: "recognizing" }),
   () => dispatch({ type: "transaction_ready", data: DEMO_TXN }),
   () => dispatch({ type: "transaction_ready", data: DEMO_LOW }),

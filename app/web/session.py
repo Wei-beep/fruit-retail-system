@@ -41,9 +41,16 @@ class KioskSession:
     # ------------------------------------------------------------------
     # 业务回调 → 广播
     # ------------------------------------------------------------------
-    def _on_reading(self, weight_kg: float, is_stable: bool) -> None:
+    def _on_reading(self, weight_kg: float, is_stable: bool, triggered: bool) -> None:
+        # triggered=False 表示秤上没放东西（或低于触发阈值）：前端据此显示「请放置」引导，
+        # 不展示具体克重；triggered=True 后前端才切到实时重量显示。
         self.broadcaster.publish(
-            {"type": "weight", "weight_g": int(weight_kg * 1000), "stable": bool(is_stable)}
+            {
+                "type": "weight",
+                "weight_g": int(weight_kg * 1000),
+                "stable": bool(is_stable),
+                "triggered": bool(triggered),
+            }
         )
         # 稳定达成瞬间预告"识别中"（capture + 推理即将开始）
         if is_stable and not self._recognizing_sent:
