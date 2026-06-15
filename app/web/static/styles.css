@@ -218,6 +218,25 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 .btn-sm { flex: 0 0 auto; padding: 8px 16px; font-size: 15px; }
 .btn-wide { width: 100%; flex: none; }
 
+/* ============ 右上角控件：中/EN 开关 + 退出 ✕ ============ */
+.header-right { display: flex; align-items: center; gap: 10px; }
+
+/* 中/EN 分段开关：默认「中」高亮。选择器/支付遮罩盖住顶栏，故仅主界面可见 */
+.lang-toggle {
+  display: inline-flex; align-items: center;
+  height: 34px; padding: 2px; gap: 2px;
+  background: var(--bg); border: 1px solid var(--border-strong); border-radius: 999px;
+}
+.lang-opt {
+  height: 30px; min-width: 40px; padding: 0 10px;
+  border: none; border-radius: 999px; background: transparent; cursor: pointer;
+  font-family: var(--font); font-size: 14px; font-weight: 700; line-height: 1;
+  color: var(--text-muted);
+  transition: background .15s, color .15s, transform .05s;
+}
+.lang-opt.active { background: var(--accent); color: #fff; }
+.lang-opt:active { transform: scale(.96); }
+
 /* ============ 退出 ✕ 按钮（右上角） ============ */
 .exit-btn {
   flex: 0 0 auto; width: 36px; height: 36px; border-radius: 9px;
