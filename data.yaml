@@ -1,0 +1,70 @@
+names:
+  0: pomelo
+  1: carrot
+  2: onion (purple)
+  3: garlic
+  4: apple (red_delicious)
+  5: tomato (cherry_yellow_packaged)
+  6: tomato (slivka)
+  7: grape (green)
+  8: banana (mini)
+  9: mango
+  10: cucumber (long)
+  11: grape (black)
+  12: apple (spartan)
+  13: plum (purple)
+  14: banana (yellow)
+  15: apple (granny)
+  16: tomato (cherry_yellow)
+  17: zucchini (green)
+  18: pumpkin (elonged)
+  19: daikon
+  20: lemon (orange)
+  21: pear (williams_rouge)
+  22: pepper (sweet_red)
+  23: tomato (pink)
+  24: cabbage (broccoli)
+  25: potato (pink)
+  26: orange
+  27: beet (round)
+  28: cabbage (peking)
+  29: avocado (zutano)
+  30: tomato (bull_heart)
+  31: raddish (round)
+  32: salad (green)
+  33: apricot (jerdel)
+  34: apricot (armenian)
+  35: nectarine (round)
+  36: onion (white)
+  37: apple (ligol)
+  38: nectarine (flat)
+  39: grapefruit
+  40: tomato (yellow)
+  41: zucchini (white)
+  42: lime
+  43: avocado (hass)
+  44: raddish (elonged)
+  45: apple (golden)
+  46: cabbage (white)
+  47: kiwi
+  48: plum (pink)
+  49: melon (torpeda)
+  50: tomato (cherry_red)
+  51: pepper (sweet_elonged)
+  52: pepper (sweet_green)
+  53: corn
+  54: cucumber (medium)
+  55: potato (yellow)
+  56: pepper (chili)
+  57: grape (pink)
+  58: pepper (sweet_yellow)
+  59: lemon (yellow)
+  60: cauliflower
+  61: watermelon (elonged)
+  62: tangerine
+  63: conference pear
+  64: pomegranate
+  65: apple (fuji)
+path: /root/autodl-tmp/yolo_dataset
+train: images/train
+val: images/val

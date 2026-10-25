@@ -26,6 +26,7 @@ vision:
   mode: real
   model_path: data/models/best.onnx
   confidence_threshold: 0.5
+  mixed_score_threshold: 0.05
 
 api:
   host: 127.0.0.1

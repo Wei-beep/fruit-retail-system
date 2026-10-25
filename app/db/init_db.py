@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+from app.core.constants import MOCK_PRODUCT_LABEL, MOCK_PRODUCT_NAME_CN
 from app.db import repositories
 from app.db.database import get_connection, initialize_schema
 
 
+# 仅一个明确的「测试专用」商品作为默认种子，供 Mock 闭环（MockFruitVegetableDetector
+# 固定返回该 label）与测试查价使用。刻意不再用 apple/banana 等真实水果名，避免测试交易
+# 与真实交易数据混淆。真实水果一律由 scripts/sync_db.py 按模型类别写入。
 DEFAULT_PRODUCTS = [
-    ("apple", "苹果", 12.8),
-    ("banana", "香蕉", 8.5),
-    ("orange", "橙子", 10.0),
+    (MOCK_PRODUCT_LABEL, MOCK_PRODUCT_NAME_CN, 9.9),
 ]
 
 

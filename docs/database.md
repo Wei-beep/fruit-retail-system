@@ -14,7 +14,7 @@
 | price_per_kg | REAL NOT NULL | 每千克单价 |
 | updated_at | TIMESTAMP | 更新时间 |
 
-默认数据包括 `apple / 苹果 / 12.8`、`banana / 香蕉 / 8.5`、`orange / 橙子 / 10.0`。真实 YOLO 模式下可运行 `python scripts/sync_db.py`，将 `data/models/label_map.json` 中全部 65 类果蔬写入 `products`（默认单价 9.9 元/kg），供识别后查价。
+默认数据仅一个测试专用商品 `mock_item / 测试商品 / 9.9`（由 `init_db` 种子化，供 Mock 闭环查价；刻意不用真实水果名以免测试交易与真实交易混淆）。真实 YOLO 模式下可运行 `python scripts/sync_db.py`，将 `data/models/label_map.json` 中的真实果蔬类（当前 66 类）写入 `products`（默认单价 9.9 元/kg），供识别后查价。`sync_db.py` 为真正的「同步」（增 + 删）：同步后会删除既不属于当前模型类别、也不属于 Mock 默认商品（`mock_item`）的历史遗留标签，使 `products` 收敛为「当前模型真实类别 ∪ Mock 默认」，避免换模型后旧标签长期堆积；该操作幂等。
 
 ## transactions
 

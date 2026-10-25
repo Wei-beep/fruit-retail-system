@@ -12,7 +12,7 @@
 
 ## vision
 
-`app/vision` 定义果蔬识别接口 `predict(frame: np.ndarray) -> dict`。`MockFruitVegetableDetector` 固定返回 `apple`；`YOLODetector` 已完整实现，基于 ONNX Runtime（锁定 3 线程 CPU 推理）、256×256 中心裁剪预处理，支持 65 类果蔬，返回 `{label, confidence, zh_name}`，并兼容 `str` 路径与 `np.ndarray` 两种输入。
+`app/vision` 定义果蔬识别接口 `predict(frame: np.ndarray) -> dict`。`MockFruitVegetableDetector` 固定返回测试商品 `mock_item`；`YOLODetector` 已完整实现（YOLO11 目标检测），基于 ONNX Runtime（锁定 3 线程 CPU 推理）、640×640 letterbox 保宽高比预处理，输出 `[1,4+N,8400]` 经 `cv2.dnn.NMSBoxes` 非极大值抑制（score=0.25 / nms=0.45）后按类别聚合，当前 `label_map.json` 对应 66 类果蔬与多目标计数，返回 `{label, confidence, zh_name, count, candidates, detected_labels}`，并兼容 `str` 路径与 `np.ndarray` 两种输入。主检测置信度低于 `vision.confidence_threshold` 时判 `unknown` 转候选/手动选品；检测到多个不同 label 时 Web UI 会提示只保留一种商品。
 
 ## camera
 
@@ -44,7 +44,7 @@
 
 ## scripts
 
-`scripts` 提供初始化数据库（`init_db.py`）、启动 GUI/Web/API（`run_gui.py`/`run_web.py`/`run_api.py`）、完整 HX711 校准（`calibrate_scale.py`）、拍照测试（`capture_test_image.py`）、把 `label_map.json` 全部 65 类同步进 `products`（`sync_db.py`）、YOLO 测速（`speed_test.py`）、摄像头实时流测试（`stream_test.py`）、HX711 实时读数验证（`weighing_test.py`）和全屏称重显示（`weighing_test_gui.py`，整数克实时大字显示）入口。各脚本经 `_bootstrap.py` 把项目根注入 `sys.path`。
+`scripts` 提供初始化数据库（`init_db.py`）、启动 GUI/Web/API（`run_gui.py`/`run_web.py`/`run_api.py`）、完整 HX711 校准（`calibrate_scale.py`）、拍照测试（`capture_test_image.py`）、把 `label_map.json` 中真实果蔬类（当前 66 类）同步进 `products`（`sync_db.py`，增+删的真正同步，会清理换模型后遗留的旧标签，保留 Mock 默认商品）、YOLO 测速（`speed_test.py`，复用 `YOLODetector` 端到端计时）、摄像头实时流测试（`stream_test.py`）、HX711 实时读数验证（`weighing_test.py`）和全屏称重显示（`weighing_test_gui.py`，整数克实时大字显示）入口。各脚本经 `_bootstrap.py` 把项目根注入 `sys.path`。
 
 ## tests
 

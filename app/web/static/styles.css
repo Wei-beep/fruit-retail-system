@@ -159,12 +159,19 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 
 /* ③ 待确认 */
-.name-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.name { font-size: 38px; font-weight: 800; color: var(--text); line-height: 1.1; }
-.conf-chip {
+.name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.name {
+  min-width: 0; font-size: 38px; font-weight: 800; color: var(--text); line-height: 1.1;
+  overflow-wrap: break-word;
+}
+html[lang="en"] .name { font-size: 30px; line-height: 1.12; }
+.review-chips { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.conf-chip,
+.count-chip {
   flex: 0 0 auto; background: var(--ok-soft); color: var(--ok);
   font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
 }
+.count-chip { background: var(--accent-soft); color: var(--accent-dark); }
 .meta { display: flex; gap: 12px; margin-top: 18px; }
 .meta-item {
   flex: 1; background: var(--bg); border: 1px solid var(--border);
@@ -197,10 +204,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   display: flex; align-items: center; justify-content: space-between;
   background: var(--card); border: 1.5px solid var(--border-strong);
   border-radius: 10px; padding: 11px 14px; cursor: pointer;
-  font-size: 18px; font-weight: 700; color: var(--text);
+  font-size: 18px; font-weight: 700; color: var(--text); gap: 10px;
 }
 .cand:active { border-color: var(--accent); background: var(--accent-soft); }
-.cand .cand-conf { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.cand .cand-name { min-width: 0; overflow-wrap: break-word; text-align: left; }
+.cand .cand-conf { flex: 0 0 auto; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+html[lang="en"] .cand { font-size: 15px; padding: 9px 12px; }
+.cand-static { cursor: default; background: var(--warn-soft); border-color: #fed7aa; }
+.cand-static:active { border-color: #fed7aa; background: var(--warn-soft); }
 
 /* ============ 按钮 ============ */
 .btn {
@@ -221,7 +232,7 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* ============ 右上角控件：中/EN 开关 + 退出 ✕ ============ */
 .header-right { display: flex; align-items: center; gap: 10px; }
 
-/* 中/EN 分段开关：默认「中」高亮。选择器/支付遮罩盖住顶栏，故仅主界面可见 */
+/* 中/EN 分段开关：保留在右上角，允许随时切换。 */
 .lang-toggle {
   display: inline-flex; align-items: center;
   height: 34px; padding: 2px; gap: 2px; margin-right: 8px;
@@ -303,7 +314,11 @@ input, textarea { -webkit-user-select: text; user-select: text; }
   display: flex; flex-direction: column; justify-content: center; gap: 4px;
 }
 .cell:active { border-color: var(--accent); background: var(--accent-soft); }
-.cell .cell-name { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.cell .cell-name {
+  font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.2;
+  overflow-wrap: break-word;
+}
+html[lang="en"] .cell .cell-name { font-size: 13px; line-height: 1.15; }
 .cell .cell-price { font-size: 13px; color: var(--accent); font-weight: 600; }
 .grid-empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 40px 0; }
 
@@ -340,10 +355,14 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 .receipt-title { font-size: 17px; font-weight: 700; color: var(--text-muted); }
 .receipt-row {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 18px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 18px;
 }
-.receipt-name { font-size: 34px; font-weight: 800; color: var(--text); line-height: 1.1; }
-.receipt-total { font-size: 36px; font-weight: 900; color: var(--accent); line-height: 1; }
+.receipt-name {
+  min-width: 0; font-size: 34px; font-weight: 800; color: var(--text); line-height: 1.1;
+  overflow-wrap: break-word;
+}
+.receipt-total { flex: 0 0 auto; font-size: 36px; font-weight: 900; color: var(--accent); line-height: 1; }
+html[lang="en"] .receipt-name { font-size: 28px; line-height: 1.12; }
 .receipt-divider { border-top: 1px dashed var(--border-strong); margin: 16px 0; }
 .receipt-meta {
   display: flex; justify-content: space-between; color: var(--text-muted); font-size: 15px;

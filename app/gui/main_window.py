@@ -24,6 +24,7 @@ class MainWindow:
             "status": tk.StringVar(value="初始化..."),
             "name_cn": tk.StringVar(value="-"),
             "label": tk.StringVar(value="-"),
+            "count": tk.StringVar(value="-"),
             "confidence": tk.StringVar(value="-"),
             "weight_kg": tk.StringVar(value="-"),
             "price_per_kg": tk.StringVar(value="-"),
@@ -90,6 +91,7 @@ class MainWindow:
         rows = [
             ("识别种类", "name_cn"),
             ("英文字段", "label"),
+            ("水果数量", "count"),
             ("置信度", "confidence"),
             ("重量 kg", "weight_kg"),
             ("单价 元/kg", "price_per_kg"),
@@ -149,6 +151,7 @@ class MainWindow:
             self.fields["status"].set("待确认")
             self.fields["name_cn"].set(transaction["name_cn"])
             self.fields["label"].set(transaction["label"])
+            self.fields["count"].set(str(transaction.get("count", 0)))
             self.fields["confidence"].set(f"{transaction['confidence']:.2f}")
             self.fields["weight_kg"].set(f"{transaction['weight_kg']:.3f}")
             self.fields["price_per_kg"].set(f"{transaction['price_per_kg']:.2f}")
@@ -158,7 +161,7 @@ class MainWindow:
 
     def clear_fields(self) -> None:
         def update() -> None:
-            for key in ("name_cn", "label", "confidence", "weight_kg", "price_per_kg", "total_price"):
+            for key in ("name_cn", "label", "count", "confidence", "weight_kg", "price_per_kg", "total_price"):
                 self.fields[key].set("-")
 
         self.root.after(0, update)

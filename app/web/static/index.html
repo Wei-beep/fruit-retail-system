@@ -27,8 +27,7 @@
         </div>
       </div>
       <div class="header-right">
-        <!-- 中/EN 语言切换：默认「中」，点击热切换全站文案。仅在放置-识别-确认主界面可见
-             （选择器/支付遮罩 z-index:10 会盖住整条顶栏，连同 ✕，故支付页不出现该开关） -->
+        <!-- 中/EN 语言切换：保留在右上角，允许顾客随时切换。 -->
         <div class="lang-toggle" role="group" aria-label="语言 / Language">
           <button class="lang-opt active" data-action="lang" data-lang="zh">中</button>
           <button class="lang-opt" data-action="lang" data-lang="en">EN</button>
@@ -76,7 +75,10 @@
         <div class="panel panel-review">
           <div class="name-row">
             <span class="name" id="reviewName">—</span>
-            <span class="conf-chip" id="reviewConf" data-i18n="conf_init">置信度 —</span>
+            <span class="review-chips">
+              <span class="count-chip" id="reviewCount" data-i18n="count_init">数量 —</span>
+              <span class="conf-chip" id="reviewConf" data-i18n="conf_init">置信度 —</span>
+            </span>
           </div>
           <div class="meta">
             <div class="meta-item"><label data-i18n="label_weight">重量</label><b><span id="reviewWeight">—</span> kg</b></div>
@@ -100,7 +102,7 @@
           <div class="candidates-title" data-i18n="low_maybe">可能是：</div>
           <div class="candidates" id="candidates"><!-- JS 注入 --></div>
           <div class="actions">
-            <button class="btn btn-warn" data-action="open-selector" data-i18n="low_browse_all">查看全部品类</button>
+            <button class="btn btn-warn" id="lowBrowseAll" data-action="open-selector" data-i18n="low_browse_all">查看全部品类</button>
             <button class="btn btn-ghost" data-action="clear" data-i18n="btn_cancel">取消</button>
           </div>
         </div>

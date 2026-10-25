@@ -1,4 +1,5 @@
 from app.camera.mock_camera import MockCamera
+from app.core.constants import MOCK_PRODUCT_LABEL, MOCK_PRODUCT_NAME_CN
 from app.db import repositories
 from app.db.init_db import initialize_database
 from app.pricing.price_service import PriceService
@@ -24,8 +25,8 @@ def test_prepare_transaction_and_confirm_flow() -> None:
 
     prepared = flow.prepare_transaction()
 
-    assert prepared["label"] == "apple"
-    assert prepared["name_cn"] == "苹果"
+    assert prepared["label"] == MOCK_PRODUCT_LABEL
+    assert prepared["name_cn"] == MOCK_PRODUCT_NAME_CN
     assert prepared["total_price"] > 0
     assert len(repositories.list_transactions()) == before_count
 

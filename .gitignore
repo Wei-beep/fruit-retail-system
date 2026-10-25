@@ -37,8 +37,8 @@ data/images/captured/*
 
 # YOLO model weights — too large for git, distributed separately (no LFS).
 # label_map.json and README.md under data/models/ are kept (small, needed).
-data/models/*.onnx
-data/models/*.pt
+#data/models/*.onnx
+#data/models/*.pt
 
 # Claude Code IPC pipes
 .lgd-nfy*

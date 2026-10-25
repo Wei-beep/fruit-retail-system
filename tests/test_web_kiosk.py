@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from app.camera.mock_camera import MockCamera
 from app.core.config import load_config
+from app.core.constants import MOCK_PRODUCT_LABEL
 from app.db import repositories
 from app.db.init_db import initialize_database
 from app.gui.gui_controller import GUIController
@@ -39,9 +40,27 @@ class _LowConfDetector(FruitVegetableDetector):
             "confidence": 0.31,
             "zh_name": "置信度过低",
             "candidates": [
-                {"label": "apple", "zh_name": "苹果", "confidence": 0.31},
-                {"label": "banana", "zh_name": "香蕉", "confidence": 0.28},
+                {"label": "apple_red_delicious", "zh_name": "红地里蛇果", "confidence": 0.31},
+                {"label": "banana_yellow", "zh_name": "黄香蕉", "confidence": 0.28},
                 {"label": "orange", "zh_name": "橙子", "confidence": 0.20},
+            ],
+        }
+
+
+class _MixedDetector(FruitVegetableDetector):
+    def predict(self, frame: np.ndarray) -> dict:
+        return {
+            "label": "apple_red_delicious",
+            "confidence": 0.91,
+            "zh_name": "红地里蛇果",
+            "count": 2,
+            "candidates": [
+                {"label": "apple_red_delicious", "zh_name": "红地里蛇果", "confidence": 0.91, "count": 2},
+                {"label": "banana_yellow", "zh_name": "黄香蕉", "confidence": 0.82, "count": 1},
+            ],
+            "detected_labels": [
+                {"label": "apple_red_delicious", "zh_name": "红地里蛇果", "confidence": 0.91, "count": 2},
+                {"label": "banana_yellow", "zh_name": "黄香蕉", "confidence": 0.82, "count": 1},
             ],
         }
 
@@ -49,7 +68,8 @@ class _LowConfDetector(FruitVegetableDetector):
 def test_prepare_with_candidates_confident() -> None:
     initialize_database()
     prepared = _make_flow().prepare_transaction(include_candidates=True)
-    assert prepared["label"] == "apple"
+    assert prepared["label"] == MOCK_PRODUCT_LABEL
+    assert prepared["count"] == 1
     assert prepared["low_confidence"] is False
     assert prepared["total_price"] > 0
     assert len(prepared["candidates"]) == 3
@@ -62,6 +82,20 @@ def test_prepare_with_candidates_low_confidence_does_not_raise() -> None:
     assert prepared["total_price"] is None
     assert prepared["price_per_kg"] is None
     assert len(prepared["candidates"]) == 3
+
+
+def test_prepare_with_mixed_detected_blocks_confirmation() -> None:
+    initialize_database()
+    prepared = _make_flow(detector=_MixedDetector()).prepare_transaction(include_candidates=True)
+    assert prepared["low_confidence"] is True
+    assert prepared["mixed_detected"] is True
+    assert prepared["count"] == 2
+    assert prepared["total_price"] is None
+    assert prepared["price_per_kg"] is None
+    assert [item["label"] for item in prepared["detected_labels"]] == [
+        "apple_red_delicious",
+        "banana_yellow",
+    ]
 
 
 def test_on_reading_callback_invoked() -> None:
@@ -161,20 +195,20 @@ def test_select_label_recomputes_total() -> None:
         "weight_kg": 0.5, "price_per_kg": None, "total_price": None,
         "low_confidence": True, "candidates": [],
     }
-    controller.select_label("apple")
+    controller.select_label(MOCK_PRODUCT_LABEL)
     assert events, "select_label 应触发 on_transaction_ready"
     updated = events[-1]
-    assert updated["label"] == "apple"
+    assert updated["label"] == MOCK_PRODUCT_LABEL
     assert updated["low_confidence"] is False
-    apple = repositories.get_product_by_label("apple")
-    assert updated["total_price"] == round(0.5 * float(apple["price_per_kg"]), 2)
+    product = repositories.get_product_by_label(MOCK_PRODUCT_LABEL)
+    assert updated["total_price"] == round(0.5 * float(product["price_per_kg"]), 2)
 
 
 def test_list_products() -> None:
     initialize_database()
     products = PriceService().list_products()
     labels = {p["label"] for p in products}
-    assert {"apple", "banana", "orange"}.issubset(labels)
+    assert MOCK_PRODUCT_LABEL in labels  # initialize_database 唯一保证的默认种子
     assert all("price_per_kg" in p and "name_cn" in p for p in products)
 
 
@@ -191,7 +225,10 @@ def test_web_rest_endpoints() -> None:
     with TestClient(app) as client:
         assert client.get("/healthz").json() == {"status": "ok"}
         products = client.get("/api/ui/products").json()
-        assert any(p["label"] == "apple" for p in products)
+        # 面向顾客的品类选择器应排除测试专用商品 mock_item
+        labels = {p["label"] for p in products}
+        assert MOCK_PRODUCT_LABEL not in labels
+        assert all("price_per_kg" in p and "name_cn" in p for p in products)
 
 
 def test_web_exit_endpoint_sets_shutdown() -> None:
@@ -214,7 +251,7 @@ def test_web_ws_full_flow() -> None:
                 if msg["type"] == "transaction_ready":
                     ready = msg["data"]
                     break
-            assert ready is not None and ready["label"] == "apple"
+            assert ready is not None and ready["label"] == MOCK_PRODUCT_LABEL
 
             ws.send_json({"type": "confirm"})
             confirmed = None
@@ -225,4 +262,4 @@ def test_web_ws_full_flow() -> None:
                     break
             assert confirmed is not None
             assert confirmed["transaction_id"] > 0
-            assert confirmed["data"]["label"] == "apple"
+            assert confirmed["data"]["label"] == MOCK_PRODUCT_LABEL

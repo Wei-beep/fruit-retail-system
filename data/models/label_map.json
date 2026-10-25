@@ -1,67 +1,266 @@
 {
-  "0": {"en": "apple_fuji", "zh": "红富士苹果"},
-  "1": {"en": "apple_golden", "zh": "黄元帅/金冠苹果"},
-  "2": {"en": "apple_granny", "zh": "青苹果"},
-  "3": {"en": "apple_fuji", "zh": "红富士苹果"},
-  "4": {"en": "apple_red_delicious", "zh": "蛇果/红香蕉苹果"},
-  "5": {"en": "apple_spartan", "zh": "斯巴达苹果"},
-  "6": {"en": "apricot_armenian", "zh": "亚美尼亚杏"},
-  "7": {"en": "apricot_jerdel", "zh": "野杏"},
-  "8": {"en": "avocado_hass", "zh": "哈斯牛油果(黑绿)"},
-  "9": {"en": "avocado_zutano", "zh": "祖塔诺牛油果(亮绿)"},
-  "10": {"en": "banana_mini", "zh": "迷你蕉/芭蕉"},
-  "11": {"en": "banana_yellow", "zh": "普通黄香蕉"},
-  "12": {"en": "beet_round", "zh": "红甜菜根"},
-  "13": {"en": "cabbage_broccoli", "zh": "西兰花"},
-  "14": {"en": "cabbage_cauliflower", "zh": "白花菜"},
-  "15": {"en": "cabbage_peking", "zh": "大白菜"},
-  "16": {"en": "cabbage_white", "zh": "圆白菜/卷心菜"},
-  "17": {"en": "carrot_carrot", "zh": "胡萝卜"},
-  "18": {"en": "corn_corn", "zh": "玉米"},
-  "19": {"en": "cucumber_long", "zh": "长黄瓜"},
-  "20": {"en": "cucumber_medium", "zh": "中等黄瓜/旱黄瓜"},
-  "21": {"en": "daikon_daikon", "zh": "白萝卜"},
-  "22": {"en": "garlic_garlic", "zh": "大蒜"},
-  "23": {"en": "grape_black", "zh": "黑葡萄"},
-  "24": {"en": "grape_green", "zh": "青提/绿葡萄"},
-  "25": {"en": "grape_pink", "zh": "红提/粉葡萄"},
-  "26": {"en": "grapefruit_grapefruit", "zh": "西柚/葡萄柚"},
-  "27": {"en": "kiwi_kiwi", "zh": "猕猴桃"},
-  "28": {"en": "lemon_orange", "zh": "橙色柠檬/梅尔柠檬"},
-  "29": {"en": "lemon_yellow", "zh": "黄柠檬"},
-  "30": {"en": "lime_lime", "zh": "青柠"},
-  "31": {"en": "mango_mango", "zh": "芒果"},
-  "32": {"en": "melon_torpeda", "zh": "甜瓜/哈密瓜"},
-  "33": {"en": "nectarine_flat", "zh": "扁油桃/蟠桃"},
-  "34": {"en": "nectarine_round", "zh": "圆油桃"},
-  "35": {"en": "onion_purple", "zh": "紫洋葱"},
-  "36": {"en": "onion_white", "zh": "白洋葱"},
-  "37": {"en": "orange_orange", "zh": "橙子"},
-  "38": {"en": "pear_conference", "zh": "会议梨"},
-  "39": {"en": "pear_williams_rouge", "zh": "红巴梨"},
-  "40": {"en": "pepper_chili", "zh": "小米辣/辣椒"},
-  "41": {"en": "pepper_sweet_elonged", "zh": "长甜椒/尖椒"},
-  "42": {"en": "pepper_sweet_green", "zh": "绿菜椒/青椒"},
-  "43": {"en": "pepper_sweet_red", "zh": "红菜椒"},
-  "44": {"en": "pepper_sweet_yellow", "zh": "黄菜椒"},
-  "45": {"en": "plum_pink", "zh": "粉红李子"},
-  "46": {"en": "plum_purple", "zh": "紫黑李子/黑布林"},
-  "47": {"en": "pomegranate_pomegranate", "zh": "石榴"},
-  "48": {"en": "pomelo_pomelo", "zh": "柚子"},
-  "49": {"en": "potato_pink", "zh": "红皮土豆"},
-  "50": {"en": "potato_yellow", "zh": "黄皮土豆"},
-  "51": {"en": "pumpkin_elonged", "zh": "长南瓜"},
-  "52": {"en": "raddish_elonged", "zh": "长樱桃萝卜"},
-  "53": {"en": "raddish_round", "zh": "小圆萝卜"},
-  "54": {"en": "salad_green", "zh": "生菜/沙拉菜"},
-  "55": {"en": "tangerine_tangerine", "zh": "橘子"},
-  "56": {"en": "tomato_bull_heart", "zh": "牛心番茄"},
-  "57": {"en": "tomato_cherry_red", "zh": "红樱桃番茄/圣女果"},
-  "58": {"en": "tomato_cherry_yellow", "zh": "黄樱桃番茄"},
-  "59": {"en": "tomato_pink", "zh": "粉红大番茄"},
-  "60": {"en": "tomato_slivka", "zh": "罗马番茄(椭圆)"},
-  "61": {"en": "tomato_yellow", "zh": "黄番茄"},
-  "62": {"en": "watermelon_elonged", "zh": "长条西瓜"},
-  "63": {"en": "zucchini_green", "zh": "绿西葫芦"},
-  "64": {"en": "zucchini_white", "zh": "白西葫芦"}
+  "0": {
+    "label": "pomelo",
+    "zh_name": "柚子"
+  },
+  "1": {
+    "label": "carrot",
+    "zh_name": "胡萝卜"
+  },
+  "2": {
+    "label": "apple_red_delicious",
+    "zh_name": "红地里蛇果"
+  },
+  "3": {
+    "label": "garlic",
+    "zh_name": "大蒜"
+  },
+  "4": {
+    "label": "apple_red_delicious",
+    "zh_name": "红地里蛇果"
+  },
+  "5": {
+    "label": "tomato_cherry_yellow_packaged",
+    "zh_name": "盒装黄樱桃番茄"
+  },
+  "6": {
+    "label": "tomato_slivka",
+    "zh_name": "Slivka番茄"
+  },
+  "7": {
+    "label": "grape_green",
+    "zh_name": "绿葡萄"
+  },
+  "8": {
+    "label": "banana_mini",
+    "zh_name": "小米蕉"
+  },
+  "9": {
+    "label": "mango",
+    "zh_name": "芒果"
+  },
+  "10": {
+    "label": "cucumber_long",
+    "zh_name": "长黄瓜"
+  },
+  "11": {
+    "label": "grape_black",
+    "zh_name": "黑葡萄"
+  },
+  "12": {
+    "label": "apple_spartan",
+    "zh_name": "斯巴达苹果"
+  },
+  "13": {
+    "label": "plum_purple",
+    "zh_name": "紫李子"
+  },
+  "14": {
+    "label": "banana_yellow",
+    "zh_name": "黄香蕉"
+  },
+  "15": {
+    "label": "apple_granny",
+    "zh_name": "青苹果"
+  },
+  "16": {
+    "label": "tomato_cherry_yellow",
+    "zh_name": "黄樱桃番茄"
+  },
+  "17": {
+    "label": "zucchini_green",
+    "zh_name": "绿西葫芦"
+  },
+  "18": {
+    "label": "pumpkin_elonged",
+    "zh_name": "长南瓜"
+  },
+  "19": {
+    "label": "daikon",
+    "zh_name": "白萝卜"
+  },
+  "20": {
+    "label": "lemon_orange",
+    "zh_name": "橙柠檬"
+  },
+  "21": {
+    "label": "pear_williams_rouge",
+    "zh_name": "红威廉梨"
+  },
+  "22": {
+    "label": "apple_red_delicious",
+    "zh_name": "红地里蛇果"
+  },
+  "23": {
+    "label": "tomato_cherry_red",
+    "zh_name": "红樱桃番茄"
+  },
+  "24": {
+    "label": "cabbage_broccoli",
+    "zh_name": "西兰花"
+  },
+  "25": {
+    "label": "potato_pink",
+    "zh_name": "红皮土豆"
+  },
+  "26": {
+    "label": "orange",
+    "zh_name": "橙子"
+  },
+  "27": {
+    "label": "beet_round",
+    "zh_name": "圆甜菜"
+  },
+  "28": {
+    "label": "cabbage_peking",
+    "zh_name": "北京包菜"
+  },
+  "29": {
+    "label": "avocado_zutano",
+    "zh_name": "祖塔诺牛油果"
+  },
+  "30": {
+    "label": "tomato_bull_heart",
+    "zh_name": "牛心番茄"
+  },
+  "31": {
+    "label": "raddish_round",
+    "zh_name": "樱桃萝卜"
+  },
+  "32": {
+    "label": "salad_green",
+    "zh_name": "绿沙拉菜"
+  },
+  "33": {
+    "label": "apricot_jerdel",
+    "zh_name": "Jerdel杏"
+  },
+  "34": {
+    "label": "apricot_armenian",
+    "zh_name": "亚美尼亚杏"
+  },
+  "35": {
+    "label": "nectarine_round",
+    "zh_name": "圆油桃"
+  },
+  "36": {
+    "label": "onion_white",
+    "zh_name": "白洋葱"
+  },
+  "37": {
+    "label": "apple_ligol",
+    "zh_name": "丽高苹果"
+  },
+  "38": {
+    "label": "nectarine_flat",
+    "zh_name": "扁油桃"
+  },
+  "39": {
+    "label": "grapefruit",
+    "zh_name": "西柚"
+  },
+  "40": {
+    "label": "tomato_yellow",
+    "zh_name": "黄番茄"
+  },
+  "41": {
+    "label": "zucchini_white",
+    "zh_name": "白西葫芦"
+  },
+  "42": {
+    "label": "lime",
+    "zh_name": "青柠"
+  },
+  "43": {
+    "label": "plum_purple",
+    "zh_name": "紫李子"
+  },
+  "44": {
+    "label": "raddish_elonged",
+    "zh_name": "长萝卜"
+  },
+  "45": {
+    "label": "apple_golden",
+    "zh_name": "黄元帅苹果"
+  },
+  "46": {
+    "label": "cabbage_white",
+    "zh_name": "白包菜"
+  },
+  "47": {
+    "label": "kiwi",
+    "zh_name": "猕猴桃"
+  },
+  "48": {
+    "label": "plum_pink",
+    "zh_name": "粉红李"
+  },
+  "49": {
+    "label": "melon_torpeda",
+    "zh_name": "Torpeda甜瓜"
+  },
+  "50": {
+    "label": "tomato_cherry_red",
+    "zh_name": "红樱桃番茄"
+  },
+  "51": {
+    "label": "pepper_sweet_elonged",
+    "zh_name": "长甜椒"
+  },
+  "52": {
+    "label": "pepper_sweet_green",
+    "zh_name": "绿甜椒"
+  },
+  "53": {
+    "label": "corn",
+    "zh_name": "玉米"
+  },
+  "54": {
+    "label": "cucumber_medium",
+    "zh_name": "中黄瓜"
+  },
+  "55": {
+    "label": "potato_yellow",
+    "zh_name": "黄土豆"
+  },
+  "56": {
+    "label": "pepper_chili",
+    "zh_name": "辣椒"
+  },
+  "57": {
+    "label": "grape_pink",
+    "zh_name": "粉葡萄"
+  },
+  "58": {
+    "label": "pepper_sweet_yellow",
+    "zh_name": "黄甜椒"
+  },
+  "59": {
+    "label": "lemon_yellow",
+    "zh_name": "黄柠檬"
+  },
+  "60": {
+    "label": "cauliflower",
+    "zh_name": "花椰菜"
+  },
+  "61": {
+    "label": "watermelon_elonged",
+    "zh_name": "长西瓜"
+  },
+  "62": {
+    "label": "tangerine",
+    "zh_name": "橘子"
+  },
+  "63": {
+    "label": "pear_conference",
+    "zh_name": "康弗伦斯梨"
+  },
+  "64": {
+    "label": "nectarine_round",
+    "zh_name": "圆油桃"
+  },
+  "65": {
+    "label": "apple_fuji",
+    "zh_name": "红富士苹果"
+  }
 }

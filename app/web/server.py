@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import load_config
+from app.core.constants import MOCK_PRODUCT_LABEL
 from app.db.init_db import initialize_database
 from app.pricing.price_service import PriceService
 from app.web.broadcaster import Broadcaster
@@ -66,7 +67,10 @@ def create_web_app(config: dict | None = None) -> FastAPI:
 
     @app.get("/api/ui/products")
     def products() -> list[dict]:
-        return price_service.list_products()
+        # 排除测试专用商品 mock_item：它仅供 Mock 闭环查价，不应出现在面向顾客的
+        # 全品类选择器中（否则前端会多出一个 mock 分类 Tab）。过滤放在 UI 端点边界，
+        # 不影响 PriceService.list_products() 的通用语义。
+        return [p for p in price_service.list_products() if p["label"] != MOCK_PRODUCT_LABEL]
 
     @app.post("/api/exit")
     def exit_app() -> dict:

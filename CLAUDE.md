@@ -2,7 +2,7 @@
 
 ## 项目现状
 
-这是一个面向 Raspberry Pi 触摸屏场景的果蔬识别与零售计价系统。当前已进入真实硬件/YOLO 联调阶段：USB 摄像头（常开模式，内存直传）、YOLO ONNX 推理引擎（3 线程锁死，支持 65 类果蔬识别）、HX711 称重驱动均已实现并接入前端。`config.yaml` 中 `camera.mode`、`vision.mode`、`weighing.mode` 默认均已切换为 `real`。
+这是一个面向 Raspberry Pi 触摸屏场景的果蔬识别与零售计价系统。当前已进入真实硬件/YOLO 联调阶段：USB 摄像头（常开模式，内存直传）、YOLO11 ONNX 目标检测引擎（3 线程锁死，支持 71 类果蔬识别，含多目标计数）、HX711 称重驱动均已实现并接入前端。`config.yaml` 中 `camera.mode`、`vision.mode`、`weighing.mode` 默认均已切换为 `real`。
 
 前端有两套，由 `config.yaml` 的 `gui.frontend` 切换：默认 `web`（Chromium kiosk，`app/web`），保留 `tk`（旧 Tkinter，`app/gui`）。两者共用业务层（`create_transaction_flow` / `GUIController` / `TransactionFlow`），互不影响。
 
@@ -12,7 +12,7 @@ Mock 模式保留作为开发/调试备选，仍可切换回 `mock` 运行。后
 
 - Python 3 + `.venv/`；SQLite（标准库 `sqlite3`，`data/app.db`）；YAML 配置（`pyyaml`，`config.yaml`）。
 - 前端：Tkinter（800x480 触摸屏）/ FastAPI + uvicorn（`app/web` Web kiosk，WS+MJPEG，依赖 `websockets`；`app/api` 为对外预留）。
-- 视觉/采集：OpenCV（`cv2`，Mock 不依赖）、ONNX Runtime（`YOLODetector`，3 线程 CPU 推理）、Pillow（GUI 渲染）。
+- 视觉/采集：OpenCV（`cv2`，含 `cv2.dnn.NMSBoxes` 后处理，Mock 不依赖）、ONNX Runtime（`YOLODetector`，YOLO11 检测，3 线程 CPU 推理）、Pillow（GUI 渲染）。
 - 测试 pytest（Web 层依赖 `httpx`）；GUI 性能监控依赖 `psutil`。
 
 ## 目录结构
@@ -88,7 +88,7 @@ python -m pytest
 - 称重模块已实现并默认启用（`app/weighing/hx711_sensor.py`，`weighing.mode: real`）；首次使用前必须运行 `scripts/calibrate_scale.py` 完成校准。
 - 不要让 Mock 模式依赖 OpenCV、真实 YOLO 包、GPIO/HX711 库或硬件设备。
 - 真实硬件和真实 YOLO 逻辑只能在既有实现位置扩展：`app/camera/usb_camera.py`、`app/weighing/hx711_sensor.py`、`app/weighing/calibration.py`、`app/vision/detector.py` 以及相关脚本。
-- 识别器接口应保持 `predict(frame: np.ndarray) -> dict`，返回至少包含 `label` 和 `confidence`；`candidates`（top-3）为可选附加键，Tk 路径忽略，Web 低置信兜底使用。
+- 识别器接口应保持 `predict(frame: np.ndarray) -> dict`，返回至少包含 `label` 和 `confidence`；`candidates`（top-3）、`count`（该类检出个数，供重数比异常校验）为可选附加键，Tk 路径忽略，Web 低置信兜底使用 `candidates`。
 - 两套前端共用 `create_transaction_flow`/`GUIController`；扩展业务层时新增参数必须带默认值以保持 Tk 现状（如 `prepare_transaction(include_candidates=False)`、`GUIController(auto_restart_after_confirm=True)`）。Web 后端在 `app/web`，与 `app/api` 分离；Tk 前端闭环不得依赖任何服务进程。
 - Web 模式单进程内只此一处持有摄像头/HX711（`KioskSession`），不要在 Web 路径再起第二个读取硬件的线程。HX711 的 ~±820/840g 假读数根因是并发抢占下 SCK 滞留拉高致芯片掉电，已由驱动用 mmap 位读取根治（见上条与 `docs/hardware_wiring.md`）；勿用互斥锁/限 cv2 线程/降 nice 等手段「修」它（实测无效）。
 - 称重接口应返回 kg 单位的 `float`。`TransactionFlow.wait_for_stable_weight()` 负责稳定判断和有效重量范围过滤。
@@ -107,9 +107,9 @@ python -m pytest
 
 ## 当前可确认的实现细节
 
-- Mock（测试依赖）：`MockWeightSensor` 重量逐步稳定到约 `0.52 kg`；`MockFruitVegetableDetector` 固定返回 `{"label":"apple","confidence":0.97}`；`MockCamera.capture()` 返回 ndarray（优先读 `data/images/test/` 首张图，否则 640x480 全黑）。Mock 不依赖 cv2/GPIO。
+- Mock（测试依赖）：`MockWeightSensor` 重量逐步稳定到约 `0.52 kg`；`MockFruitVegetableDetector` 固定返回测试商品 `{"label":"mock_item","confidence":0.97}`（label 见 `app/core/constants.py` 的 `MOCK_PRODUCT_LABEL`）；`MockCamera.capture()` 返回 ndarray（优先读 `data/images/test/` 首张图，否则 640x480 全黑）。Mock 不依赖 cv2/GPIO。
 - `StabilityDetector`：固定长度滑动窗口，窗口满且极差不超阈值即稳定。
-- 初始化数据库建 `products`/`transactions`/`calibration` 三表，并 upsert `apple`/`banana`/`orange` 默认价格。
+- 初始化数据库建 `products`/`transactions`/`calibration` 三表，并 upsert 唯一测试默认商品 `mock_item / 测试商品`（刻意不用真实水果名，避免测试交易与真实交易混淆）；真实水果一律由 `scripts/sync_db.py` 按模型类别写入。
 - `camera_interface.capture()` 返回 `np.ndarray`（内存直传，非文件路径）。
 - `HX711Sensor`：位读取 24 位 ADC，结合 `calibration` 表返回 kg。**时序关键的 25 个 SCK 脉冲用 mmap 直接读写寄存器（持 GIL 不被换出），勿改回纯 `RPi.GPIO`**——否则多线程负载下 SCK 滞留拉高致掉电、蹦出 ~±820/840g 假读数（详见 `docs/hardware_wiring.md`「时序与并发」）。
 

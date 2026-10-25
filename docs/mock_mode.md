@@ -16,13 +16,13 @@ Mock 模式用于在没有真实摄像头、HX711 称重模块和 YOLO 模型时
 
 ## MockFruitVegetableDetector
 
-`app/vision/mock_detector.py` 固定返回：
+`app/vision/mock_detector.py` 固定返回测试专用商品（label 取自 `app/core/constants.py` 的 `MOCK_PRODUCT_LABEL`）：
 
 ```python
-{"label": "apple", "confidence": 0.97}
+{"label": "mock_item", "confidence": 0.97, "zh_name": "测试商品", "count": 1, "candidates": [...]}
 ```
 
-系统随后从 `products` 表查询 `apple` 的中文名和单价。
+系统随后从 `products` 表查询 `mock_item` 的中文名和单价。该 label 由 `init_db` 作为唯一默认种子商品写入，刻意不用 `apple`/`banana` 等真实水果名，避免 Mock/测试交易与真实交易数据混淆。
 
 ## 使用原因
 

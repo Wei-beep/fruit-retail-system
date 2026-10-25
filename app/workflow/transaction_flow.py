@@ -118,6 +118,8 @@ class TransactionFlow:
 
         label = recognition["label"]
         confidence = float(recognition["confidence"])
+        count = int(recognition.get("count") or 0)
+        detected_labels = recognition.get("detected_labels") or []
 
         if not include_candidates:
             product = self.price_service.get_price(label)
@@ -129,6 +131,7 @@ class TransactionFlow:
                 "label": label,
                 "name_cn": product["name_cn"],
                 "confidence": confidence,
+                "count": count,
                 "weight_kg": weight_kg,
                 "price_per_kg": product["price_per_kg"],
                 "total_price": total_price,
@@ -137,8 +140,9 @@ class TransactionFlow:
 
         # Web 路径：低置信/未登记不报错，转候选/手动选择
         candidates = recognition.get("candidates", [])
+        mixed_detected = len(detected_labels) > 1
         product = None
-        low_confidence = label in ("unknown", "error")
+        low_confidence = mixed_detected or label in ("unknown", "error")
         if not low_confidence:
             try:
                 product = self.price_service.get_price(label)
@@ -158,10 +162,13 @@ class TransactionFlow:
             "label": label,
             "name_cn": name_cn,
             "confidence": confidence,
+            "count": count,
             "weight_kg": weight_kg,
             "price_per_kg": price_per_kg,
             "total_price": total_price,
             "low_confidence": low_confidence,
+            "mixed_detected": mixed_detected,
+            "detected_labels": detected_labels,
             "candidates": candidates,
         }
 

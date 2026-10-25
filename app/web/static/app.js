@@ -11,7 +11,7 @@ const DEMO = new URLSearchParams(location.search).has("demo");
  * i18n — 中/EN 文案表 + 热切换
  * 静态文本走 HTML 的 data-i18n / data-i18n-ph / data-i18n-alt / data-i18n-aria；
  * 动态渲染（待确认/低置信/支付/选择器）由各 render 函数读 t()，切换时重渲染。
- * 商品名取自后端 name_cn（库内无英文名），属数据而非界面文案，不在此翻译。
+ * 商品名中文取后端 name_cn/zh_name；英文由稳定 label 转为可读名称。
  * ===================================================================== */
 const I18N = {
   zh: {
@@ -26,10 +26,13 @@ const I18N = {
     idle_weighing_sub: "请保持稳定，正在读数…",
     recognizing_lead: "正在识别…",
     conf_prefix: "置信度 ", conf_init: "置信度 —",
+    count_prefix: "数量 ", count_init: "数量 —",
     label_weight: "重量", label_unit: "单价", label_total: "总价",
     btn_confirm: "确认", btn_cancel: "取消",
     link_redo: "识别不对？手动选择 ›",
     low_warn: "⚠ 识别可能不准，请确认品类",
+    mixed_warn: "检测到多种商品，请拿走别的，只保留一种",
+    mixed_detected: "检测到：",
     low_maybe: "可能是：",
     low_browse_all: "查看全部品类",
     selector_title: "选择商品品类",
@@ -66,10 +69,13 @@ const I18N = {
     idle_weighing_sub: "Hold steady, reading…",
     recognizing_lead: "Recognizing…",
     conf_prefix: "Confidence ", conf_init: "Confidence —",
+    count_prefix: "Count ", count_init: "Count —",
     label_weight: "Weight", label_unit: "Unit price", label_total: "Total",
     btn_confirm: "Confirm", btn_cancel: "Cancel",
     link_redo: "Wrong? Choose manually ›",
     low_warn: "⚠ Recognition may be off — please confirm the item",
+    mixed_warn: "Multiple item types detected. Remove the others and keep one type only.",
+    mixed_detected: "Detected:",
     low_maybe: "Could be:",
     low_browse_all: "Browse all items",
     selector_title: "Select an item",
@@ -146,11 +152,13 @@ const els = {
   recogWeight: document.getElementById("recogWeight"),
   lowWeight: document.getElementById("lowWeight"),
   reviewName: document.getElementById("reviewName"),
+  reviewCount: document.getElementById("reviewCount"),
   reviewConf: document.getElementById("reviewConf"),
   reviewWeight: document.getElementById("reviewWeight"),
   reviewUnit: document.getElementById("reviewUnit"),
   reviewTotal: document.getElementById("reviewTotal"),
   candidates: document.getElementById("candidates"),
+  lowBrowseAll: document.getElementById("lowBrowseAll"),
   cats: document.getElementById("cats"),
   grid: document.getElementById("grid"),
   search: document.getElementById("search"),
@@ -206,9 +214,86 @@ function setProgress(state) {
 
 /* ---------------- 渲染 ---------------- */
 function fmtConf(c) { return Math.round((c || 0) * 100) + "%"; }
+const ZH_NAME_OVERRIDES = {
+  onion_purple: "红地里蛇果",
+  avocado_hass: "紫李子",
+  pepper_sweet_red: "红地里蛇果",
+  pomegranate: "圆油桃",
+  tomato_pink: "红樱桃番茄",
+};
+const EN_NAME_OVERRIDES = {
+  apple_fuji: "Fuji Apple",
+  apple_golden: "Golden Apple",
+  apple_granny: "Green Apple",
+  apple_ligol: "Ligol Apple",
+  apple_red_delicious: "Red Apple",
+  apple_spartan: "Spartan Apple",
+  apricot_armenian: "Armenian Apricot",
+  apricot_jerdel: "Jerdel Apricot",
+  avocado_hass: "Purple Plum",
+  avocado_zutano: "Zutano Avocado",
+  banana_mini: "Mini Banana",
+  banana_yellow: "Banana",
+  beet_round: "Beet",
+  cabbage_broccoli: "Broccoli",
+  cabbage_peking: "Napa Cabbage",
+  cabbage_white: "Cabbage",
+  cucumber_long: "Long Cucumber",
+  cucumber_medium: "Cucumber",
+  grape_black: "Black Grape",
+  grape_green: "Green Grape",
+  grape_pink: "Pink Grape",
+  lemon_orange: "Orange Lemon",
+  lemon_yellow: "Lemon",
+  melon_torpeda: "Torpeda Melon",
+  nectarine_flat: "Flat Nectarine",
+  nectarine_round: "Nectarine",
+  onion_purple: "Red Apple",
+  onion_white: "White Onion",
+  pear_conference: "Conference Pear",
+  pear_williams_rouge: "Red Pear",
+  pepper_chili: "Chili",
+  pepper_sweet_elonged: "Sweet Pepper",
+  pepper_sweet_green: "Green Pepper",
+  pepper_sweet_red: "Red Apple",
+  pepper_sweet_yellow: "Yellow Pepper",
+  plum_pink: "Pink Plum",
+  plum_purple: "Purple Plum",
+  pomegranate: "Nectarine",
+  potato_pink: "Pink Potato",
+  potato_yellow: "Potato",
+  pumpkin_elonged: "Pumpkin",
+  raddish_elonged: "Radish",
+  raddish_round: "Round Radish",
+  salad_green: "Green Salad",
+  tomato_bull_heart: "Beef Tomato",
+  tomato_cherry_red: "Cherry Tomato",
+  tomato_cherry_yellow: "Yellow Cherry Tomato",
+  tomato_cherry_yellow_packaged: "Packed Cherry Tomato",
+  tomato_pink: "Cherry Tomato",
+  tomato_slivka: "Plum Tomato",
+  tomato_yellow: "Yellow Tomato",
+  watermelon_elonged: "Watermelon",
+  zucchini_green: "Green Zucchini",
+  zucchini_white: "White Zucchini",
+};
+function humanizeLabel(label) {
+  if (!label) return "";
+  return String(label)
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+function itemName(item, fallback = t("item_fallback")) {
+  if (!item) return fallback;
+  if (lang === "en") return EN_NAME_OVERRIDES[item.label] || item.name_en || humanizeLabel(item.label) || item.name_cn || item.zh_name || fallback;
+  return ZH_NAME_OVERRIDES[item.label] || item.name_cn || item.zh_name || humanizeLabel(item.label) || fallback;
+}
 
 function renderReview(d) {
-  els.reviewName.textContent = d.name_cn || d.label || "—";
+  els.reviewName.textContent = itemName(d, "—");
+  els.reviewCount.textContent = t("count_prefix") + (d.count ?? 0);
   els.reviewConf.textContent = t("conf_prefix") + fmtConf(d.confidence);
   els.reviewWeight.textContent = (d.weight_kg ?? 0).toFixed(3);
   els.reviewUnit.textContent = d.price_per_kg != null ? d.price_per_kg.toFixed(2) : "—";
@@ -218,18 +303,33 @@ function renderReview(d) {
 function renderLowConf(d) {
   els.lowWeight.textContent = Math.round((d.weight_kg ?? 0) * 1000);
   els.candidates.innerHTML = "";
-  (d.candidates || []).forEach((c) => {
+  const banner = document.querySelector(".warn-banner");
+  const title = document.querySelector(".candidates-title");
+  const mixed = !!d.mixed_detected;
+  if (banner) banner.textContent = mixed ? t("mixed_warn") : t("low_warn");
+  if (title) title.textContent = mixed ? t("mixed_detected") : t("low_maybe");
+  if (els.lowBrowseAll) els.lowBrowseAll.style.display = mixed ? "none" : "";
+  const list = mixed ? (d.detected_labels || []) : (d.candidates || []);
+  list.forEach((c) => {
+    if (mixed) {
+      const item = document.createElement("div");
+      item.className = "cand cand-static";
+      item.innerHTML =
+        `<span class="cand-name">${itemName(c)}</span><span class="cand-conf">×${c.count ?? 1}</span>`;
+      els.candidates.appendChild(item);
+      return;
+    }
     const btn = document.createElement("button");
     btn.className = "cand";
     btn.innerHTML =
-      `<span>${c.zh_name || c.label}</span><span class="cand-conf">${fmtConf(c.confidence)}</span>`;
+      `<span class="cand-name">${itemName(c)}</span><span class="cand-conf">${fmtConf(c.confidence)}</span>`;
     btn.addEventListener("click", () => send({ type: "select", label: c.label }));
     els.candidates.appendChild(btn);
   });
 }
 
 function renderPayment(d, orderId) {
-  els.payName.textContent = d.name_cn || d.label || t("item_fallback");
+  els.payName.textContent = itemName(d);
   els.payTotal.textContent = "¥" + (d.total_price != null ? d.total_price.toFixed(2) : "—");
   els.payWeight.textContent = (d.weight_kg ?? 0).toFixed(3);
   els.payUnit.textContent = d.price_per_kg != null ? d.price_per_kg.toFixed(2) : "—";
@@ -285,7 +385,8 @@ function renderGrid() {
   const q = (els.search.value || "").trim().toLowerCase();
   const list = products.filter((p) => {
     const catOk = activeCat === CAT_ALL || catKeyOf(p) === activeCat;
-    const qOk = !q || (p.name_cn || "").toLowerCase().includes(q) ||
+    const display = itemName(p, "").toLowerCase();
+    const qOk = !q || display.includes(q) || (p.name_cn || "").toLowerCase().includes(q) ||
       (p.label || "").toLowerCase().includes(q);
     return catOk && qOk;
   });
@@ -298,7 +399,7 @@ function renderGrid() {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.innerHTML =
-      `<div class="cell-name">${p.name_cn || p.label}</div>` +
+      `<div class="cell-name">${itemName(p, p.label)}</div>` +
       `<div class="cell-price">¥${Number(p.price_per_kg).toFixed(2)}/kg</div>`;
     cell.addEventListener("click", () => send({ type: "select", label: p.label }));
     els.grid.appendChild(cell);
@@ -429,6 +530,7 @@ function enableDragScroll(el) {
 
 /* ---------------- 启动 ---------------- */
 function init() {
+  document.getElementById("languageModal")?.remove();
   applyStaticI18n();              // 默认 zh，与 HTML 一致；统一从文案表取，便于将来改默认语言
   document.title = t("title");
   bindVideo();
@@ -453,23 +555,34 @@ const DEMO_PRODUCTS = [
 ];
 const DEMO_TXN = {
   label: "apple_fuji", name_cn: "红富士苹果", confidence: 0.96,
-  weight_kg: 0.326, price_per_kg: 12.8, total_price: 4.17,
+  count: 3, weight_kg: 0.326, price_per_kg: 12.8, total_price: 4.17,
   low_confidence: false, candidates: [],
 };
 const DEMO_LOW = {
   label: "unknown", name_cn: null, confidence: 0.41,
-  weight_kg: 0.258, price_per_kg: null, total_price: null, low_confidence: true,
+  count: 1, weight_kg: 0.258, price_per_kg: null, total_price: null, low_confidence: true,
   candidates: [
     { label: "apple_fuji", zh_name: "红富士苹果", confidence: 0.41 },
     { label: "apple_granny", zh_name: "青苹果", confidence: 0.33 },
     { label: "beet_round", zh_name: "红甜菜根", confidence: 0.18 },
   ],
 };
+const DEMO_MIXED = {
+  label: "apple_fuji", name_cn: "红富士苹果", confidence: 0.88,
+  count: 2, weight_kg: 0.412, price_per_kg: null, total_price: null,
+  low_confidence: true, mixed_detected: true,
+  detected_labels: [
+    { label: "apple_fuji", zh_name: "红富士苹果", confidence: 0.88, count: 2 },
+    { label: "banana_yellow", zh_name: "黄香蕉", confidence: 0.76, count: 1 },
+  ],
+  candidates: [],
+};
 const DEMO_STEPS = [
   () => dispatch({ type: "cleared" }) || dispatch({ type: "weight", weight_g: 8, stable: false, triggered: false }),
   () => dispatch({ type: "weight", weight_g: 326, stable: false, triggered: true }),
   () => dispatch({ type: "recognizing" }),
   () => dispatch({ type: "transaction_ready", data: DEMO_TXN }),
+  () => dispatch({ type: "transaction_ready", data: DEMO_MIXED }),
   () => dispatch({ type: "transaction_ready", data: DEMO_LOW }),
   () => openSelector(),
   () => dispatch({ type: "confirmed", transaction_id: 1042, data: DEMO_TXN }),

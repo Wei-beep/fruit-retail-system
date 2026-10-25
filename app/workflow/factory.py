@@ -45,7 +45,11 @@ def create_transaction_flow(config: dict) -> TransactionFlow:
     if vision_config["mode"] == "mock":
         detector = MockFruitVegetableDetector()
     else:
-        detector = YOLODetector(vision_config["model_path"], vision_config["confidence_threshold"])
+        detector = YOLODetector(
+            vision_config["model_path"],
+            vision_config["confidence_threshold"],
+            mixed_score_threshold=vision_config.get("mixed_score_threshold", 0.05),
+        )
 
     return TransactionFlow(
         weight_sensor=weight_sensor,

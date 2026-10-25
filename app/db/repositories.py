@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 from app.db.database import get_connection
@@ -39,6 +40,24 @@ def upsert_product(label: str, name_cn: str, price_per_kg: float) -> None:
             """,
             (label, name_cn, price_per_kg),
         )
+
+
+def delete_products_not_in(labels: Iterable[str]) -> int:
+    """删除 label 不在给定集合内的 products 行，返回删除条数。
+
+    用于 sync_db 把 products 收敛到「当前模型类别 ∪ Mock 默认商品」，清理历史遗留标签。
+    空集合时不删任何行（安全兜底，避免误清空整表）。
+    """
+    keep = list(labels)
+    if not keep:
+        return 0
+    placeholders = ",".join("?" for _ in keep)
+    with get_connection() as connection:
+        cursor = connection.execute(
+            f"DELETE FROM products WHERE label NOT IN ({placeholders})",
+            keep,
+        )
+        return cursor.rowcount
 
 
 def create_transaction(label: str, weight_kg: float, price_per_kg: float, total_price: float) -> int:
